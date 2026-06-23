@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campanha Encerrada</title>
+    <style>
+        :root {
+            --primary: #84231a;
+            --primary-dark: #6a1a13;
+            --primary-light: #fdf3f2;
+            --primary-mid: #b5382c;
+            --bg: #f8f9fb;
+            --text: #1f2933;
+            --muted: #6b7280;
+            --red: #dc2626;
+            --border: #e5e7eb;
+            --white: #ffffff;
+            --card-shadow: 0 1px 4px rgba(0,0,0,0.07);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text);
+        }
+
+        .container {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        h1 {
+            color: var(--text);
+            font-size: 32px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 18px;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .countdown-section {
+            background: var(--primary-light);
+            border: 1.5px solid var(--primary-mid);
+            border-radius: 8px;
+            padding: 30px;
+            margin: 40px 0;
+        }
+
+        .countdown-label {
+            color: var(--primary-dark);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .countdown {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .countdown-item {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .countdown-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+            line-height: 1;
+        }
+
+        .countdown-label-item {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-text {
+            color: var(--muted);
+            font-size: 14px;
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: var(--white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+        }
+
+        .action-text {
+            color: var(--primary);
+            font-size: 14px;
+            margin-top: 30px;
+            font-weight: 500;
+        }
+
+        .footer {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 40px 25px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .icon {
+                font-size: 60px;
+            }
+
+            .countdown {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .countdown-value {
+                font-size: 24px;
+            }
+
+            .countdown-item {
+                padding: 12px;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status-badge">Campanha Encerrada</div>
+        
+        <div class="icon">📋</div>
+        
+        <h1>Campanha Finalizada</h1>
+        
+        <p class="subtitle">
+            Obrigado por sua participação! A campanha já foi encerrada e não está mais disponível para submissões.
+        </p>
+
+        <div class="countdown-section">
+            <div class="countdown-label">Página será removida em</div>
+            
+            <div class="countdown">
+                <div class="countdown-item">
+                    <span class="countdown-value" id="days">7</span>
+                    <span class="countdown-label-item">Dias</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="hours">0</span>
+                    <span class="countdown-label-item">Horas</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="minutes">0</span>
+                    <span class="countdown-label-item">Minutos</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-value" id="seconds">0</span>
+                    <span class="countdown-label-item">Segundos</span>
+                </div>
+            </div>
+
+            <p class="info-text">
+                Os dados da campanha foram salvos com segurança. Qualquer dúvida, entre em contato com o time de Projetos (PMO).
+            </p>
+        </div>
+
+        <p class="action-text">
+            ⏰ Esta página será removida em uma semana
+        </p>
+
+        <div class="footer">
+            <p>Campanha encerrada em {{ DATA_ENCERRAMENTO }}</p>
+        </div>
+    </div>
+
+    <script>
+        // Data de início (ajuste conforme necessário)
+        const startDate = new Date();
+        
+        // Data de expiração (7 dias depois)
+        const expirationDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+        // Salvar datas no localStorage para persistência
+        if (!localStorage.getItem('campaignEndDate')) {
+            localStorage.setItem('campaignEndDate', expirationDate.toISOString());
+        }
+
+        const savedExpirationDate = new Date(localStorage.getItem('campaignEndDate'));
+
+        function updateCountdown() {
+            const now = new Date();
+            const timeRemaining = savedExpirationDate - now;
+
+            if (timeRemaining <= 0) {
+                // Campanha expirada - redirecionar ou mostrar mensagem final
+                document.body.innerHTML = `
+                    <div class="container" style="background: var(--primary-light); border: 2px solid var(--primary);">
+                        <div style="font-size: 60px; margin-bottom: 20px;">✓</div>
+                        <h1 style="color: var(--primary);">Campanha Removida</h1>
+                        <p class="subtitle">Esta página foi removida permanentemente.</p>
+                        <p style="color: var(--muted); margin-top: 20px;">
+                            Se você tem dúvidas sobre a campanha, entre em contato com o time de PMO.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+            // Atualizar exibição
+            document.getElementById('days').textContent = String(days).padStart(2, '0');
+            document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+
+            // Se faltarem menos de 24 horas, adicionar animação de pulso
+            if (timeRemaining < 24 * 60 * 60 * 1000) {
+                document.querySelector('.countdown-section').classList.add('pulse');
+            }
+        }
+
+        // Atualizar a cada segundo
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+
+        // Formatar data de encerramento
+        const endDate = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        const formattedDate = endDate.toLocaleDateString('pt-BR', options);
+        document.querySelector('.footer p').textContent = `Campanha encerrada em ${formattedDate}`;
+    </script>
+</body>
+</html>
