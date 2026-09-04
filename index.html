@@ -1,0 +1,2042 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMO · Análise Integrada de Iniciativas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+
+:root {
+ /* Paleta Corporativa Executiva */
+ --bg: #f3f4f6;
+ --surface: #ffffff;
+ --surface2: #f8fafc;
+ --surface3: #eef0f4;
+ --border: #e2e8f0;
+ --border2: #cbd5e1;
+ --text: #1e293b;
+ --muted: #64748b;
+ --dim: #94a3b8;
+
+ /* Vinho Corporativo (cor primária absoluta) */
+ --red: #84231a;
+ --red2: #a02c21;
+ --red-dim: rgba(132,35,26,.08);
+ --red-border: rgba(132,35,26,.25);
+ /* Mantém aliases para compatibilidade com componentes existentes */
+ --blue: #84231a;
+ --blue-dim: rgba(132,35,26,.08);
+ --blue-border: rgba(132,35,26,.25);
+ --purple: #84231a;
+ --purple-dim: rgba(132,35,26,.08);
+ --purple-border: rgba(132,35,26,.25);
+
+ /* Status semáforo */
+ --green: #16a34a;
+ --green-dim: rgba(22,163,74,.1);
+ --green-border: rgba(22,163,74,.25);
+ --amber: #d97706;
+ --amber-dim: rgba(217,119,6,.1);
+ --amber-border: rgba(217,119,6,.25);
+
+ --font-display: 'Poppins', sans-serif;
+ --font-body: 'Poppins', sans-serif;
+ --font-mono: 'DM Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+ font-family: var(--font-body);
+ background: var(--bg);
+ color: var(--text);
+ min-height: 100vh;
+ line-height: 1.6;
+}
+
+/* ── NOISE TEXTURE ── */
+body::before {
+ content: '';
+ position: fixed;
+ inset: 0;
+ background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+ pointer-events: none;
+ z-index: 0;
+}
+
+/* ── LAYOUT ── */
+.app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 32px 20px 80px; }
+
+/* ── HEADER ── */
+.header { text-align: center; margin-bottom: 56px; }
+.header-eyebrow {
+ display: inline-flex; align-items: center; gap: 8px;
+ font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px;
+ text-transform: uppercase; color: var(--muted);
+ border: 1px solid var(--border2); border-radius: 20px;
+ padding: 5px 14px; margin-bottom: 20px;
+}
+.header-eyebrow span { width: 6px; height: 6px; border-radius: 50%; background: var(--red); display: inline-block; }
+.header h1 {
+ font-family: var(--font-display);
+ font-size: clamp(32px, 5vw, 52px);
+ font-weight: 400;
+ line-height: 1.1;
+ color: var(--text);
+ margin-bottom: 12px;
+}
+.header h1 em { font-style: italic; color: var(--red); }
+.header p { font-size: 15px; color: var(--muted); max-width: 480px; margin: 0 auto; }
+
+/* ── PROGRESS STEPPER ── */
+.stepper {
+ display: flex; align-items: center; justify-content: center;
+ gap: 0; margin-bottom: 48px;
+}
+.step-item { display: flex; align-items: center; gap: 0; }
+.step-circle {
+ width: 36px; height: 36px; border-radius: 50%;
+ border: 1px solid var(--border2);
+ background: var(--surface);
+ display: flex; align-items: center; justify-content: center;
+ font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+ color: var(--muted); transition: all .3s ease; cursor: default;
+ position: relative; z-index: 1;
+}
+.step-circle.active { border-color: var(--red); color: var(--red); background: var(--blue-dim); box-shadow: 0 0 0 4px rgba(132,35,26,.08); }
+.step-circle.done { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+.step-label { font-size: 11px; color: var(--muted); margin: 0 6px; white-space: nowrap; font-weight: 500; }
+.step-label.active { color: var(--red); }
+.step-label.done { color: var(--green); }
+.step-connector { width: 40px; height: 1px; background: var(--border2); margin: 0 4px; }
+.step-connector.done { background: var(--green); }
+
+/* ── CARD ── */
+.card {
+ background: var(--surface);
+ border: 1px solid var(--border);
+ border-radius: 16px;
+ overflow: hidden;
+ margin-bottom: 24px;
+}
+.card-header {
+ padding: 20px 24px;
+ border-bottom: 1px solid var(--border);
+ display: flex; align-items: center; gap: 12px;
+}
+.card-icon {
+ width: 36px; height: 36px; border-radius: 9px;
+ display: flex; align-items: center; justify-content: center;
+ font-size: 16px; flex-shrink: 0;
+}
+.card-header h2 { font-family: var(--font-display); font-size: 18px; font-weight: 400; }
+.card-header p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.card-body { padding: 24px; }
+
+/* ── PHASE BADGE ── */
+.phase-badge {
+ display: inline-flex; align-items: center; gap: 6px;
+ font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 1.5px;
+ text-transform: uppercase; padding: 3px 10px; border-radius: 4px;
+ font-weight: 500;
+}
+.phase-badge.strat { background: var(--blue-dim); color: var(--red); border: 1px solid var(--blue-border); }
+.phase-badge.pmo { background: var(--red-dim); color: var(--red); border: 1px solid var(--red-border); }
+
+/* ── FORM FIELDS ── */
+.fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 0; }
+.fields-grid .span2 { grid-column: 1 / -1; }
+.field label {
+ display: block; font-size: 10px; font-weight: 600;
+ letter-spacing: 1.2px; text-transform: uppercase;
+ color: var(--muted); margin-bottom: 6px;
+}
+.field input, .field select, .field textarea {
+ width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+ border-radius: 8px; padding: 10px 13px;
+ color: var(--text); font-family: var(--font-body); font-size: 13px;
+ outline: none; transition: border-color .2s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--red); }
+.field textarea { resize: none; min-height: 60px; }
+
+/* ── SECTION SEPARATOR ── */
+.dim-sep {
+ display: flex; align-items: center; gap: 10px;
+ margin: 20px 0 14px;
+}
+.dim-line { flex: 1; height: 1px; background: var(--border); }
+.dim-label {
+ font-family: var(--font-mono); font-size: 9px; font-weight: 500;
+ letter-spacing: 1.5px; text-transform: uppercase;
+ padding: 4px 12px; border-radius: 20px;
+}
+.dim-label.strat { color: var(--red); background: var(--blue-dim); border: 1px solid var(--blue-border); }
+.dim-label.pmo { color: var(--red); background: var(--red-dim); border: 1px solid var(--red-border); }
+
+/* ── QUESTION ROW ── */
+.q-row {
+ display: flex; align-items: flex-start; gap: 12px;
+ padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.q-row:last-child { border-bottom: none; }
+.q-num {
+ flex-shrink: 0; width: 28px; height: 22px; border-radius: 5px;
+ display: flex; align-items: center; justify-content: center;
+ font-family: var(--font-mono); font-size: 9px; font-weight: 500;
+}
+.q-num.strat { background: var(--blue-dim); color: var(--red); border: 1px solid var(--blue-border); }
+.q-num.pmo { background: var(--red-dim); color: var(--red); border: 1px solid var(--red-border); }
+.q-num.pmo-sust { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-border); }
+.q-body { flex: 1; min-width: 0; }
+.q-meta {
+ font-size: 9px; color: var(--muted); font-weight: 600;
+ letter-spacing: .8px; text-transform: uppercase;
+ margin-bottom: 3px; display: flex; align-items: center; gap: 6px;
+}
+.trigger-tag {
+ background: var(--amber-dim); color: var(--amber);
+ border: 1px solid var(--amber-border);
+ border-radius: 3px; padding: 1px 5px;
+ font-size: 8px; font-weight: 700; letter-spacing: .5px;
+}
+.q-text { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.q-btns { display: flex; gap: 4px; flex-shrink: 0; margin-top: 2px; }
+.btn-ans {
+ padding: 5px 10px; border-radius: 6px; font-size: 10.5px; font-weight: 600;
+ border: 1px solid var(--border2); background: transparent;
+ color: var(--muted); cursor: pointer; transition: all .15s;
+ font-family: var(--font-body);
+}
+.btn-ans:hover { border-color: var(--red); color: var(--text); }
+.btn-ans.a-sim { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
+.btn-ans.a-par { background: var(--amber-dim); border-color: var(--amber-border); color: var(--amber); }
+.btn-ans.a-nao { background: var(--red-dim); border-color: var(--red-border); color: var(--red); }
+
+.justif-wrap { margin: 6px 0 0 40px; display: none; }
+.justif-wrap textarea {
+ width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+ border-radius: 6px; padding: 7px 10px; color: var(--muted);
+ font-family: var(--font-body); font-size: 11.5px; outline: none;
+ resize: none; min-height: 36px;
+}
+.justif-wrap textarea:focus { border-color: var(--red); }
+
+/* ── SCORE PANEL ── */
+.score-panel {
+ display: grid; grid-template-columns: 1fr 1fr 1fr;
+ gap: 12px; margin-bottom: 16px;
+}
+.score-box {
+ background: var(--surface2); border: 1px solid var(--border);
+ border-radius: 12px; padding: 14px 16px;
+}
+.score-box-label { font-size: 9.5px; color: var(--muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.score-box-val { font-family: var(--font-display); font-size: 28px; line-height: 1; }
+.score-box-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+.bar-track { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 2px; transition: width .5s ease; }
+
+/* ── NAV BUTTONS ── */
+.nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; gap: 12px; }
+.btn {
+ padding: 11px 24px; border-radius: 9px; font-size: 13px; font-weight: 600;
+ border: none; cursor: pointer; font-family: var(--font-body); transition: all .2s;
+}
+.btn-primary { background: var(--red); color: #fff; }
+.btn-primary:hover { background: #a02c21; transform: translateY(-1px); }
+.btn-primary:disabled { background: var(--border2); color: var(--muted); cursor: not-allowed; transform: none; }
+.btn-secondary { background: var(--surface2); border: 1px solid var(--border2); color: var(--muted); }
+.btn-secondary:hover { border-color: var(--border2); color: var(--text); }
+.btn-hint { font-size: 10.5px; color: var(--amber); margin-top: 4px; text-align: right; }
+
+/* ── RESULT CARD ── */
+.result-hero {
+ border-radius: 16px; padding: 32px;
+ border: 1px solid var(--border); margin-bottom: 24px;
+ position: relative; overflow: hidden;
+}
+.result-hero::before {
+ content: ''; position: absolute; inset: 0;
+ background: radial-gradient(ellipse at top left, var(--glow-color, rgba(132,35,26,.08)) 0%, transparent 70%);
+ pointer-events: none;
+}
+.result-hero.r-projeto { --glow-color: rgba(132,35,26,.08); border-color: var(--blue-border); }
+.result-hero.r-sustentacao { --glow-color: rgba(62,207,142,.1); border-color: var(--green-border); }
+.result-hero.r-melhoria { --glow-color: rgba(245,166,35,.1); border-color: var(--amber-border); }
+.result-hero.r-pmo { --glow-color: rgba(132,35,26,.08); border-color: var(--purple-border); }
+.result-hero.r-bloqueado { --glow-color: rgba(240,96,96,.1); border-color: var(--red-border); }
+
+.result-eyebrow { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.result-title { font-family: var(--font-display); font-size: 42px; font-weight: 400; line-height: 1; margin-bottom: 10px; }
+.result-sub { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 20px; max-width: 560px; }
+.result-action {
+ display: inline-flex; align-items: center; gap: 8px;
+ font-size: 12px; font-weight: 600; padding: 8px 16px;
+ border-radius: 7px; border: 1px solid;
+}
+.result-action.obrig { background: var(--red-dim); border-color: var(--red-border); color: var(--red); }
+.result-action.livre { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
+
+/* ── MATRIX ── */
+.matrix-wrap { margin-bottom: 24px; }
+.matrix-title { font-family: var(--font-display); font-size: 18px; margin-bottom: 16px; }
+.matrix-grid {
+ display: grid;
+ grid-template-columns: 100px 1fr 1fr 1fr 1fr;
+ gap: 4px;
+}
+.matrix-cell {
+ padding: 10px 12px; border-radius: 8px;
+ background: var(--surface2); border: 1px solid var(--border);
+ font-size: 11px; text-align: center; line-height: 1.4;
+}
+.matrix-cell.header-col { background: transparent; border-color: transparent; font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .8px; text-transform: uppercase; display: flex; align-items: center; justify-content: flex-end; text-align: right; }
+.matrix-cell.header-row { background: transparent; border-color: transparent; font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .8px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; }
+.matrix-cell.highlight { border-width: 2px; font-weight: 700; transform: scale(1.03); box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+.matrix-cell.c-max { background: rgba(132,35,26,.08); border-color: var(--blue-border); color: var(--red); }
+.matrix-cell.c-high { background: rgba(62,207,142,.12); border-color: var(--green-border); color: var(--green); }
+.matrix-cell.c-mid { background: rgba(245,166,35,.1); border-color: var(--amber-border); color: var(--amber); }
+.matrix-cell.c-low { background: rgba(240,96,96,.08); border-color: var(--red-border); color: var(--red); }
+
+/* ── SCORES SUMMARY ── */
+.scores-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.score-summary-box {
+ background: var(--surface2); border: 1px solid var(--border);
+ border-radius: 12px; padding: 16px 18px;
+}
+.score-summary-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.score-summary-val { font-family: var(--font-display); font-size: 36px; margin-bottom: 4px; }
+.score-summary-detail { font-size: 11px; color: var(--muted); }
+
+/* ── RECOMMENDATIONS ── */
+.recs-wrap { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; margin-bottom: 24px; }
+.recs-title { font-family: var(--font-display); font-size: 16px; margin-bottom: 14px; }
+.rec-item { display: flex; gap: 10px; margin-bottom: 10px; font-size: 12.5px; color: #9aaab8; line-height: 1.6; }
+.rec-item:last-child { margin-bottom: 0; }
+.rec-arrow { color: var(--red); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+
+/* ── ALERTS ── */
+.alert {
+ padding: 10px 14px; border-radius: 8px; font-size: 11.5px;
+ margin-bottom: 10px; display: flex; gap: 8px; align-items: flex-start; line-height: 1.5;
+}
+.alert.info { background: var(--blue-dim); border: 1px solid var(--blue-border); color: #93c5fd; }
+.alert.warn { background: var(--amber-dim); border: 1px solid var(--amber-border); color: #fcd34d; }
+.alert.success { background: var(--green-dim); border: 1px solid var(--green-border); color: #6ee7b7; }
+.alert.danger { background: var(--red-dim); border: 1px solid var(--red-border); color: #fca5a5; }
+.alert.block { background: var(--red-dim); border: 1px solid var(--red-border); color: #fca5a5; font-size: 13px; padding: 14px 18px; }
+
+/* ── BLOQUEIO ESTRATÉGICO ── */
+.block-screen {
+ text-align: center; padding: 48px 24px;
+ background: var(--surface2); border: 1px solid var(--red-border);
+ border-radius: 16px; margin-bottom: 24px;
+}
+.block-icon { font-size: 48px; margin-bottom: 16px; }
+.block-title { font-family: var(--font-display); font-size: 28px; margin-bottom: 10px; color: var(--red); }
+.block-desc { font-size: 13px; color: var(--muted); max-width: 480px; margin: 0 auto 20px; line-height: 1.7; }
+
+/* ── PHASE TRANSITION ── */
+.phase-transition {
+ text-align: center; padding: 32px;
+ background: linear-gradient(135deg, rgba(132,35,26,.05), rgba(132,35,26,.03));
+ border: 1px solid var(--blue-border); border-radius: 16px;
+ margin-bottom: 24px;
+}
+.phase-transition h3 { font-family: var(--font-display); font-size: 22px; margin-bottom: 8px; }
+.phase-transition p { font-size: 13px; color: var(--muted); max-width: 460px; margin: 0 auto 20px; }
+
+/* ── PROGRESS BAR GERAL ── */
+.global-progress { margin-bottom: 32px; }
+.gp-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.gp-label { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: .5px; }
+.gp-pct { font-family: var(--font-mono); font-size: 13px; color: var(--red); }
+.gp-track { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.gp-fill { height: 100%; background: linear-gradient(90deg, var(--red), var(--red2)); border-radius: 2px; transition: width .4s ease; }
+
+/* ── BREAKDOWN ── */
+.breakdown { display: flex; flex-direction: column; gap: 8px; }
+.bk-row { display: flex; align-items: center; gap: 10px; }
+.bk-label { font-size: 11px; color: var(--muted); width: 130px; flex-shrink: 0; }
+.bk-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.bk-fill { height: 100%; border-radius: 2px; transition: width .4s ease; }
+.bk-val { font-family: var(--font-mono); font-size: 11px; width: 30px; text-align: right; flex-shrink: 0; }
+
+/* ── STICKY SIDE PANEL ── */
+.layout { display: grid; grid-template-columns: 1fr 280px; gap: 20px; align-items: start; }
+.col-main { display: flex; flex-direction: column; gap: 0; }
+.col-side { position: sticky; top: 20px; display: flex; flex-direction: column; gap: 14px; }
+.side-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.side-card h4 { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+
+/* ── PHASE INDICATOR ── */
+.phase-indicator {
+ display: flex; align-items: center; gap: 8px;
+ padding: 10px 14px; border-radius: 9px;
+ font-size: 12px; font-weight: 600; margin-bottom: 14px;
+}
+.phase-indicator.strat { background: var(--blue-dim); border: 1px solid var(--blue-border); color: var(--red); }
+.phase-indicator.pmo { background: var(--purple-dim); border: 1px solid var(--purple-border); color: var(--purple); }
+
+/* ── DIVIDER ── */
+hr.div { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+/* ── ANIM ── */
+.fade-in { animation: fadeIn .4s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 720px) {
+ .layout { grid-template-columns: 1fr; }
+ .col-side { position: static; }
+ .score-panel { grid-template-columns: 1fr 1fr; }
+ .fields-grid { grid-template-columns: 1fr; }
+ .scores-row { grid-template-columns: 1fr; }
+ .matrix-grid { grid-template-columns: 80px 1fr 1fr 1fr 1fr; font-size: 10px; }
+}
+
+
+/* ── LIGHT MODE ── */
+[data-theme="light"] {
+ --bg: #f5f7fa;
+ --surface: #ffffff;
+ --surface2: #f0f2f5;
+ --surface3: #e8ebf0;
+ --border: #d1d5db;
+ --border2: #c4cad4;
+ --text: #1a1d23;
+ --muted: #5a6474;
+ --dim: #8896a6;
+
+ --blue: #84231a;
+ --blue-dim: rgba(37,99,235,.08);
+ --blue-border: rgba(37,99,235,.2);
+ --green: #059669;
+ --green-dim: rgba(5,150,105,.08);
+ --green-border: rgba(5,150,105,.2);
+ --amber: #d97706;
+ --amber-dim: rgba(217,119,6,.08);
+ --amber-border: rgba(217,119,6,.2);
+ --red: #dc2626;
+ --red-dim: rgba(220,38,38,.06);
+ --red-border: rgba(220,38,38,.2);
+ --purple: #84231a;
+ --purple-dim: rgba(132,35,26,.08);
+ --purple-border: rgba(132,35,26,.25);
+}
+[data-theme="light"] body::before { display: none; }
+[data-theme="light"] .alert.info { color: #1e40af; }
+[data-theme="light"] .alert.warn { color: #92400e; }
+[data-theme="light"] .alert.success { color: #065f46; }
+[data-theme="light"] .alert.danger { color: #991b1b; }
+[data-theme="light"] .q-text { color: #374151; }
+[data-theme="light"] .rec-item { color: #4b5563; }
+
+/* ── THEME TOGGLE ── */
+.theme-toggle {
+ position: fixed;
+ top: 20px;
+ right: 24px;
+ z-index: 100;
+ display: flex;
+ align-items: center;
+ gap: 8px;
+ background: var(--surface);
+ border: 1px solid var(--border);
+ border-radius: 24px;
+ padding: 6px 10px;
+ cursor: pointer;
+ user-select: none;
+ transition: all .3s ease;
+ box-shadow: 0 2px 12px rgba(0,0,0,.15);
+}
+.theme-toggle:hover { border-color: var(--blue-border); box-shadow: 0 2px 16px rgba(0,0,0,.25); }
+.theme-icon { font-size: 16px; line-height: 1; transition: opacity .3s; }
+.theme-icon.inactive { opacity: .35; }
+.toggle-track {
+ width: 40px; height: 22px;
+ background: var(--surface3);
+ border: 1px solid var(--border2);
+ border-radius: 11px;
+ position: relative;
+ transition: background .3s, border-color .3s;
+}
+.toggle-thumb {
+ width: 16px; height: 16px;
+ border-radius: 50%;
+ background: var(--red);
+ position: absolute;
+ top: 2px; left: 2px;
+ transition: transform .3s ease;
+ box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+[data-theme="light"] .toggle-thumb { transform: translateX(18px); background: var(--amber); }
+[data-theme="light"] .toggle-track { background: #e0e7ef; border-color: #c4cad4; }
+
+
+/* ── TOOLTIP ── */
+.q-help {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--blue-dim); border: 1.5px solid var(--blue-border);
+  color: var(--red); font-size: 10px; font-weight: 700;
+  font-style: italic; font-family: Poppins, sans-serif;
+  cursor: help; flex-shrink: 0; margin-left: 6px;
+  vertical-align: middle;
+  transition: background .2s, border-color .2s;
+}
+.q-help:hover { background: var(--red); color: #fff; }
+
+/* Tooltip via JS — appended to body to avoid clipping */
+.tooltip-popup {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-size: 11.5px; line-height: 1.6;
+  padding: 10px 14px; border-radius: 10px;
+  width: 280px; text-align: left; font-weight: 400;
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  z-index: 9999; pointer-events: none;
+  opacity: 0; transition: opacity .15s;
+}
+.tooltip-popup.visible { opacity: 1; }
+
+
+/* ── PMO INSIGHTS IA ── */
+.ai-insights-wrap {
+  margin-top: 28px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.ai-insights-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #1a1d23 0%, #2d1f1c 100%);
+  border-bottom: 1px solid rgba(132,35,26,.3);
+}
+.ai-insights-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--red); display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.ai-insights-title { font-size: 14px; font-weight: 700; color: #fff; }
+.ai-insights-sub { font-size: 11px; color: rgba(255,255,255,.5); margin-top: 1px; }
+.ai-insights-badge {
+  margin-left: auto; font-size: 9px; font-weight: 700; letter-spacing: 1px;
+  padding: 3px 10px; border-radius: 20px;
+  background: rgba(132,35,26,.4); color: rgba(255,255,255,.8);
+  text-transform: uppercase;
+}
+.ai-insights-body { padding: 20px; }
+
+/* Loading */
+.ai-loading {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 40px 20px; gap: 14px;
+}
+.ai-dots { display: flex; gap: 6px; }
+.ai-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--red); opacity: .3;
+  animation: ai-pulse 1.4s ease-in-out infinite;
+}
+.ai-dot:nth-child(2) { animation-delay: .2s; }
+.ai-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes ai-pulse { 0%,80%,100%{opacity:.3;transform:scale(1)} 40%{opacity:1;transform:scale(1.2)} }
+.ai-loading-text { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.6; }
+
+/* Result */
+.ai-section { margin-bottom: 18px; }
+.ai-section:last-child { margin-bottom: 0; }
+.ai-section-title {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--red);
+  margin-bottom: 8px; padding-bottom: 6px;
+  border-bottom: 1px solid rgba(132,35,26,.15);
+  display: flex; align-items: center; gap: 8px;
+}
+.ai-section-icon { font-size: 14px; }
+.ai-content {
+  font-size: 13px; color: var(--text); line-height: 1.7;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+}
+.ai-recommendation {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-radius: 10px;
+  font-size: 13px; font-weight: 700; margin-bottom: 10px;
+}
+.ai-rec-avancar { background: rgba(22,163,74,.12); color: var(--green); border: 1px solid rgba(22,163,74,.25); }
+.ai-rec-revisar { background: rgba(217,119,6,.12); color: var(--amber); border: 1px solid rgba(217,119,6,.25); }
+.ai-rec-repensar { background: rgba(132,35,26,.1); color: var(--red); border: 1px solid rgba(132,35,26,.2); }
+.ai-sources { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.ai-sources-title { font-size: 10px; color: var(--muted); font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+.ai-source-item { font-size: 11px; color: var(--red); margin-bottom: 3px; }
+.ai-error { font-size: 12px; color: var(--muted); text-align: center; padding: 24px; }
+.ai-timestamp { font-size: 10px; color: var(--dim); text-align: right; margin-top: 14px; font-family: var(--mono); }
+
+/* ── PDF BUTTON ── */
+.btn-pdf {
+ display: inline-flex; align-items: center; gap: 8px;
+ padding: 12px 28px; border-radius: 10px;
+ font-size: 13px; font-weight: 600;
+ border: 1px solid var(--amber-border);
+ background: var(--amber-dim);
+ color: var(--amber);
+ cursor: pointer;
+ font-family: var(--font-body);
+ transition: all .2s;
+}
+.btn-pdf:hover { background: rgba(245,166,35,.18); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(245,166,35,.15); }
+.btn-pdf:disabled { opacity: .5; cursor: wait; transform: none; box-shadow: none; }
+
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+<!-- THEME TOGGLE -->
+<div class="theme-toggle" onclick="toggleTheme()" title="Alternar modo claro/escuro">
+ <span class="theme-icon" id="icon-sun">☀️</span>
+ <div class="toggle-track"><div class="toggle-thumb"></div></div>
+ <span class="theme-icon inactive" id="icon-moon">🌙</span>
+</div>
+
+<div class="app">
+
+ <header class="header">
+ <div class="header-eyebrow"><span></span> PMO · Metodologia Integrada · v1.0</div>
+ <h1>Análise <em>Integrada</em><br>de Iniciativas</h1>
+ <p></p>
+ </header>
+
+ <div class="stepper" id="stepper">
+ <div class="step-item"><div class="step-circle active" id="sc-0">1</div><span class="step-label active" id="sl-0">Identificação</span></div>
+ <div class="step-connector" id="conn-0"></div>
+ <div class="step-item"><div class="step-circle" id="sc-1">2</div><span class="step-label" id="sl-1">Alinhamento Estratégico</span></div>
+ <div class="step-connector" id="conn-1"></div>
+ <div class="step-item"><div class="step-circle" id="sc-2">3</div><span class="step-label" id="sl-2">Elegibilidade PMO</span></div>
+ <div class="step-connector" id="conn-2"></div>
+ <div class="step-item"><div class="step-circle" id="sc-3">4</div><span class="step-label" id="sl-3">Resultado</span></div>
+ </div>
+
+ <div id="app-content"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════
+
+const OBJECTIVES = [
+ { id:'O1', num:1, dim:'Crescimento', title:'Expansão de Mercado e Clientes', text:'O projeto contribui para a conquista de novos mercados, segmentos ou clientes?' },
+ { id:'O2', num:2, dim:'Crescimento', title:'Aumento de Receita e Rentabilidade', text:'O projeto tem potencial de gerar receita incremental ou melhorar margens?' },
+ { id:'O3', num:3, dim:'Eficiência', title:'Excelência Operacional', text:'O projeto melhora a eficiência dos processos internos ou reduz retrabalho?' },
+ { id:'O4', num:4, dim:'Eficiência', title:'Redução de Custos e Produtividade', text:'O projeto tem potencial de reduzir custos operacionais ou aumentar produtividade?' },
+ { id:'O5', num:5, dim:'Transformação', title:'Transformação Digital e Dados', text:'O projeto contribui para modernização tecnológica, uso de dados/IA ou digitalização?' },
+ { id:'O6', num:6, dim:'Transformação', title:'Experiência do Cliente', text:'O projeto impacta positivamente a jornada, satisfação ou retenção de clientes?' },
+ { id:'O7', num:7, dim:'Sustentabilidade', title:'Conformidade, ESG e Reputação', text:'O projeto contribui para conformidade regulatória, metas ESG ou reputação?' },
+];
+
+const FCS_ITEMS = [
+ { id:'F1', num:1, dim:'Tecnologia', title:'Capacidade Tecnológica', text:'O projeto é viável com a infraestrutura e capacidade tecnológica atual?' },
+ { id:'F2', num:2, dim:'Pessoas', title:'Gestão de Talentos e Capacitação', text:'A equipe tem ou pode desenvolver as competências necessárias?' },
+ { id:'F3', num:3, dim:'Parcerias', title:'Parcerias e Ecossistema', text:'O projeto conta com ou prevê parcerias estratégicas para seu sucesso?' },
+ { id:'F4', num:4, dim:'Conformidade', title:'Conformidade Regulatória', text:'O projeto está em conformidade com requisitos legais e regulatórios?' },
+ { id:'F5', num:5, dim:'Dados', title:'Dados e Inteligência Analítica', text:'O projeto se beneficia ou contribui para o uso estratégico dos dados?' },
+ { id:'F6', num:6, dim:'Cultura', title:'Gestão da Mudança e Cultura', text:'O projeto considera gestão da mudança e engajamento cultural?' },
+];
+
+const AVENUES = [
+ { id:'A1', num:1, dim:'Receita', title:'Novo Mercado / Novo Cliente', text:'O projeto tem potencial de abrir novos mercados ou atrair novos clientes?' },
+ { id:'A2', num:2, dim:'Receita', title:'Upsell / Cross-sell', text:'O projeto cria condições para aumentar ticket médio ou portfólio?' },
+ { id:'A3', num:3, dim:'Eficiência', title:'Redução de Custos', text:'O projeto pode reduzir custos operacionais com impacto financeiro mensurável?' },
+ { id:'A4', num:4, dim:'Eficiência', title:'Ganho de Produtividade', text:'O projeto aumenta capacidade produtiva ou automatiza tarefas repetitivas?' },
+];
+
+const PMO_PROJ = [
+ { id:'P1', dim:'Estratégia', text:'A iniciativa possui objetivo claro e início, meio e fim definidos?', peso:6, trigger:true },
+ { id:'P2', dim:'Transformação', text:'Gera uma entrega única ou transformação estruturada?', peso:8, trigger:true },
+ { id:'P3', dim:'Complexidade', text:'Exige atuação coordenada entre múltiplas áreas?', peso:7, trigger:true },
+ { id:'P4', dim:'Impacto', text:'Possui impacto relevante em negócio, cliente ou compliance?', peso:8, trigger:true },
+ { id:'P5', dim:'Governança', text:'Requer cronograma formal com marcos e acompanhamento?', peso:7, trigger:true },
+ { id:'P6', dim:'Financeiro', text:'Envolve orçamento, investimento ou fornecedor externo?', peso:5, trigger:false },
+ { id:'P7', dim:'Qualidade', text:'Exige testes, homologação ou go-live controlado?', peso:5, trigger:false },
+ { id:'P8', dim:'Riscos', text:'Apresenta riscos que exigem gestão estruturada?', peso:6, trigger:false },
+ { id:'P9', dim:'Governança', text:'Iniciativa sponsor, fórum decisório ou governança executiva?', peso:6, trigger:false },
+ { id:'P10', dim:'Mudança', text:'Exige mudança relevante em processo ou sistema?', peso:7, trigger:false },
+ { id:'P11', dim:'Dependências', text:'Há dependências externas ou entre entregas?', peso:5, trigger:false },
+ { id:'P12', dim:'Esforço', text:'O esforço estimado supera 160 horas ou 8 semanas?', peso:7, trigger:false },
+];
+
+const PMO_SUST = [
+ { id:'S1', dim:'Recorrência/Correção', text:'Trata-se de iniciativa recorrente, corretiva ou rotineira?', peso:10 },
+ { id:'S2', dim:'Capacidade da Área', text:'Pode ser atendida pela capacidade da área sem governança robusta?', peso:9 },
+ { id:'S3', dim:'Escopo', text:'É um ajuste localizado, restrito a uma área?', peso:7 },
+ { id:'S4', dim:'Baixo Impacto', text:'Apresenta baixo impacto e baixa complexidade?', peso:8 },
+ { id:'S5', dim:'Prazo', text:'Pode ser concluída em até 15 dias úteis?', peso:6 },
+];
+
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxw4vr3XAzsnE1FcB07ZstonVCxvydy23YEkaH4ZEi6rWgk3_LNG6GFh8DamRqprOgb/exec";
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+
+function gerarProtocolo() {
+  var ano = new Date().getFullYear();
+  var seq = String(Math.floor(Math.random() * 9000) + 1000);
+  return ano + '-' + seq; // Formato temporário — futuramente a API fornecerá o sequencial correto
+}
+
+function freshState() {
+ return {
+ step: 0,
+ info: { nome:'', area:'', categoria:'', gestor:'', resp:'', desc:'', id_protocolo: gerarProtocolo(), classificacao:'', investimento:'', tipoBeneficio:'', receita:'', duracaoBeneficio:'', beneficioTotal:'', temPayback:'sim', payback:'', percentualRefinamento:'', just_investimento:'', data:'' },
+ strat: {}, // { O1:'sim', O2:'par', F1:'nao', ... } — all strat answers in one object
+ stratJust: {},
+ pmo: {}, // { P1:'sim', S1:'nao', ... }
+ pmoJust: {},
+ _blocked: false,
+ _withRessalva: false,
+ _saved: false,
+ _saving: false,
+ };
+}
+var S = freshState();
+
+// ── RASCUNHO AUTOMÁTICO ──────────────────────────────────────────────
+var DRAFT_KEY = 'pmo_draft_v2';
+function saveDraft() {
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ ts:Date.now(), s:{ info:S.info, strat:S.strat, stratJust:S.stratJust, pmo:S.pmo, pmoJust:S.pmoJust, step:S.step }})); } catch(e) {}
+}
+function loadDraft() {
+  try {
+    var raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return false;
+    var d = JSON.parse(raw);
+    if (Date.now() - d.ts > 86400000) { localStorage.removeItem(DRAFT_KEY); return false; }
+    Object.assign(S.info, d.s.info||{}); Object.assign(S.strat, d.s.strat||{});
+    Object.assign(S.stratJust, d.s.stratJust||{}); Object.assign(S.pmo, d.s.pmo||{});
+    Object.assign(S.pmoJust, d.s.pmoJust||{}); S.step = d.s.step||0;
+    return true;
+  } catch(e) { return false; }
+}
+function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch(e) {} }
+
+// ── SCORE CACHE (evita 9 chamadas redundantes) ────────────────────────
+function getStrat() { if (!S._sc) S._sc = calcStrat(); return S._sc; }
+function getPMO()   { if (!S._pc) S._pc = calcPMO();   return S._pc; }
+function invalidateScoreCache() { S._sc = null; S._pc = null; }
+
+// ── DEBOUNCE painel lateral ───────────────────────────────────────────
+var _sideDebounce;
+function refreshSidePanelDebounced() {
+  clearTimeout(_sideDebounce);
+  _sideDebounce = setTimeout(refreshSidePanel, 200);
+}
+function v(x){return(x===undefined||x===null||x==='undefined'||x==='null')?'':x;}
+
+// Sanitiza texto livre antes de inserir via innerHTML/atributos, evitando que
+// caracteres como " < > quebrem o HTML ou permitam injeção de script (XSS).
+function esc(x) {
+  x = v(x);
+  return String(x)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ═══════════════════════════════════════
+// SCORING
+// ═══════════════════════════════════════
+
+function calcStrat() {
+ var objTotal = 0;
+ OBJECTIVES.forEach(function(o) {
+ var a = S.strat[o.id];
+ objTotal += a === 'sim' ? 100 : a === 'par' ? 50 : 0;
+ });
+ var objScore = Math.round((objTotal / (OBJECTIVES.length * 100)) * 100);
+
+ var fcsTotal = 0, fcsCov = 0;
+ FCS_ITEMS.forEach(function(f) {
+ var a = S.strat[f.id];
+ fcsTotal += a === 'sim' ? 6 : a === 'par' ? 3 : 0;
+ fcsCov += a === 'sim' ? 1 : a === 'par' ? 0.5 : 0;
+ });
+ var fcsScore = Math.round((fcsTotal / (FCS_ITEMS.length * 6)) * 100);
+
+ var aveTotal = 0, aveCov = 0;
+ AVENUES.forEach(function(a) {
+ var v = S.strat[a.id];
+ aveTotal += v === 'sim' ? 100 : v === 'par' ? 50 : 0;
+ aveCov += v === 'sim' ? 1 : v === 'par' ? 0.5 : 0;
+ });
+ var aveScore = Math.round(aveTotal / AVENUES.length);
+ var finalScore = Math.round(objScore * 0.45 + fcsScore * 0.30 + aveScore * 0.25);
+
+ return { objScore:objScore, fcsScore:fcsScore, fcsCov:fcsCov, aveScore:aveScore, aveCov:aveCov, finalScore:finalScore };
+}
+
+function calcPMO() {
+ var proj = 0, sust = 0, triggers = 0, parciais = 0, respondidas = 0;
+ PMO_PROJ.forEach(function(q) {
+ var a = S.pmo[q.id];
+ if (a) { respondidas++; if (a === 'par') parciais++; }
+ proj += a === 'sim' ? q.peso : a === 'par' ? q.peso / 2 : 0;
+ if (q.trigger && a === 'sim') triggers++;
+ });
+ PMO_SUST.forEach(function(q) {
+ var a = S.pmo[q.id];
+ if (a) { respondidas++; if (a === 'par') parciais++; }
+ sust += a === 'sim' ? q.peso : a === 'par' ? q.peso / 2 : 0;
+ });
+ return { proj:proj, sust:sust, triggers:triggers, parciais:parciais, respondidas:respondidas };
+}
+
+function classifyPMO(proj, sust, triggers, parciais, respondidas) {
+ if (respondidas < 4) return 'vazio';
+ if ((proj >= 45 && triggers >= 3) || (proj >= 38 && sust <= 18)) return 'projeto';
+ if (sust >= 28 && proj < 25) return 'sustentacao';
+ if ((proj >= 25 && sust >= 20) || parciais >= 4) return 'pmo';
+ if (respondidas >= 8) return 'melhoria';
+ return 'vazio';
+}
+
+function stratStatus(score) {
+ if (score >= 80) return { label:'PRIORIDADE MÁXIMA', level:'max', color:'var(--green)' };
+ if (score >= 60) return { label:'PRIORIDADE ALTA', level:'high', color:'var(--amber)' };
+ if (score >= 40) return { label:'PRIORIDADE MÉDIA', level:'mid', color:'#f97316' };
+ return { label:'BAIXO ALINHAMENTO', level:'low', color:'var(--red)' };
+}
+
+// ═══════════════════════════════════════
+// MATRIX
+// ═══════════════════════════════════════
+
+var MATRIX = {
+ max: {
+ projeto: { text:'Projeto Estratégico Prioritário', cls:'c-max', esc:true, acao:'Prioridade máxima. Abertura imediata no PMO com governança executiva.' },
+ melhoria: { text:'Melhoria de Alta Prioridade', cls:'c-max', esc:false, acao:'Fast-track: rito simplificado com acompanhamento estratégico.' },
+ sustentacao: { text:'Sustentação Estratégica', cls:'c-high',esc:false, acao:'Tratar com urgência na fila operacional.' },
+ pmo: { text:'Caso Prioritário para o PMO', cls:'c-max', esc:true, acao:'Alto alinhamento com ambiguidade. PMO deve priorizar análise.' },
+ },
+ high: {
+ projeto: { text:'Projeto Estratégico', cls:'c-high',esc:true, acao:'Abrir no PMO com planejamento formal e patrocinador.' },
+ melhoria: { text:'Melhoria Bem Alinhada', cls:'c-high',esc:false, acao:'Rito simplificado. Documentar valor estratégico.' },
+ sustentacao: { text:'Sustentação Relevante', cls:'c-high',esc:false, acao:'Fila operacional com monitoramento.' },
+ pmo: { text:'Avaliar com PMO', cls:'c-high',esc:true, acao:'PMO deve definir enquadramento correto.' },
+ },
+ mid: {
+ projeto: { text:'Projeto com Revisão Estratégica', cls:'c-mid', esc:true, acao:'Abrir no PMO, mas revisar escopo para ampliar alinhamento.' },
+ melhoria: { text:'Melhoria Parcialmente Alinhada', cls:'c-mid', esc:false, acao:'Rito simplificado. Reforçar narrativa estratégica.' },
+ sustentacao: { text:'Sustentação Padrão', cls:'c-mid', esc:false, acao:'Rotina da área. Avaliar evolução futura.' },
+ pmo: { text:'Encaminhar ao PMO', cls:'c-mid', esc:true, acao:'Alinhamento médio com sinais ambíguos.' },
+ },
+ low: {
+ projeto: { text:'Projeto com Baixo Alinhamento', cls:'c-low', esc:true, acao:'Revisar escopo antes de formalizar. Risco de repriorização.' },
+ melhoria: { text:'Melhoria de Baixa Prioridade', cls:'c-low', esc:false, acao:'Executar apenas se houver capacidade ociosa.' },
+ sustentacao: { text:'Sustentação de Baixa Prioridade', cls:'c-low', esc:false, acao:'Tratar apenas se mandatório.' },
+ pmo: { text:'Revisão Estratégica Necessária', cls:'c-low', esc:true, acao:'PMO deve revisar antes de qualquer enquadramento.' },
+ },
+};
+
+// ═══════════════════════════════════════
+// GLOBAL HANDLERS
+// ═══════════════════════════════════════
+
+function autoResize(el) {
+ el.style.height = 'auto';
+ el.style.height = Math.max(36, el.scrollHeight) + 'px';
+}
+
+function parseMoneyVal(s) {
+  if (!s) return NaN;
+  s = String(s).trim().replace(/R\$/gi,'').replace(/\s/g,'');
+  if (s.includes(',')) s = s.replace(/\./g,'').replace(',','.');
+  return parseFloat(s);
+}
+
+function formatMoneyInput(el, stateKey) {
+  var raw = el.value.replace(/\D/g,'');
+  if (!raw) { el.value=''; S.info[stateKey]=''; calcPayback(); return; }
+  var num = parseInt(raw,10) / 100;
+  el.value = 'R$ ' + num.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  S.info[stateKey] = el.value;
+  if (stateKey === 'receita') calcBeneficioTotal();
+  calcPayback();
+}
+
+function calcBeneficioTotal() {
+  var rec = parseMoneyVal(S.info.receita);
+  var dur = parseInt(S.info.duracaoBeneficio)||0;
+  var totalEl = document.getElementById('fi-beneficio-total');
+  if (!totalEl) return;
+  if (!isNaN(rec) && rec > 0 && dur > 0) {
+    var total = rec * dur;
+    S.info.beneficioTotal = total.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    totalEl.textContent = 'Total estimado: R$ ' + total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' em ' + dur + ' meses';
+    totalEl.style.color = 'var(--green)';
+  } else {
+    totalEl.textContent = dur > 0 ? 'Informe o valor mensal para calcular o total' : 'Informe a duração para calcular o benefício total';
+    totalEl.style.color = 'var(--muted)';
+    S.info.beneficioTotal = '';
+  }
+}
+
+
+function paybackRadioHtml() {
+  var chkSim = S.info.temPayback !== 'nao' ? 'checked' : '';
+  var chkNao = S.info.temPayback === 'nao' ? 'checked' : '';
+  var inpStyle = 'accent-color:var(--red);width:16px;height:16px';
+  var lblStyle = 'display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:400';
+  return '<div class="field span2" style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:14px 16px">'
+    + '<label style="margin-bottom:10px;display:block">Há expectativa de payback para esta iniciativa?</label>'
+    + '<div style="display:flex;gap:20px;align-items:center">'
+    + '<label style="' + lblStyle + '"><input type="radio" name="tem-payback" value="sim" ' + chkSim + ' onchange="togglePayback()" style="' + inpStyle + '"/> Sim</label>'
+    + '<label style="' + lblStyle + '"><input type="radio" name="tem-payback" value="nao" ' + chkNao + ' onchange="togglePayback()" style="' + inpStyle + '"/> Não</label>'
+    + '</div></div>';
+}
+
+
+function setPbManual(el) {
+  el.dataset.manual = 'true';
+  S.info.payback = el.value;
+  // Atualiza legenda para refletir o valor digitado manualmente
+  var calcEl = document.getElementById('fi-payback-calc');
+  if (calcEl) {
+    if (el.value) {
+      calcEl.textContent = 'Valor definido manualmente: ' + el.value + ' meses';
+      calcEl.style.color = 'var(--amber)';
+    } else {
+      calcEl.textContent = '';
+    }
+  }
+}
+
+function paybackFieldHtml() {
+  var display = S.info.temPayback === 'nao' ? 'display:none' : '';
+  var inpStyle = 'width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 13px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none;transition:border-color .2s';
+  var html = '<div id="payback-wrap" class="field" style="' + display + '">';
+  html += '<label>Payback Estimado</label>';
+  html += '<div style="display:flex;gap:8px;align-items:center">';
+  html += '<input type="number" id="fi-payback" min="0" value="' + (S.info.payback||'') + '" placeholder="Ex: 18" oninput="setPbManual(this)" style="' + inpStyle + '"/>';
+  html += '<span style="white-space:nowrap;font-size:12px;color:var(--muted);min-width:42px">meses</span>';
+  html += '</div><div id="fi-payback-calc" style="font-size:10px;color:var(--muted);margin-top:4px"></div></div>';
+  return html;
+}
+
+function togglePayback() {
+  S.info.temPayback = document.querySelector('input[name="tem-payback"]:checked')?.value || 'sim';
+  var pbWrap = document.getElementById('payback-wrap');
+  if (!pbWrap) return;
+  if (S.info.temPayback === 'nao') {
+    pbWrap.style.display = 'none';
+    S.info.payback = '';
+    var pb = document.getElementById('fi-payback');
+    if (pb) { pb.value=''; pb.dataset.manual='false'; }
+    var calc = document.getElementById('fi-payback-calc');
+    if (calc) calc.textContent = '';
+  } else {
+    pbWrap.style.display = 'block';
+    calcPayback();
+  }
+}
+
+function getBeneficioLabel() {
+  var t = S.info.tipoBeneficio;
+  if (t === 'reducao')  return 'Redução Mensal Estimada (R$)';
+  if (t === 'evitado')  return 'Custo Evitado Mensal Estimado (R$)';
+  if (t === 'saving')   return 'Saving Mensal Estimado (R$)';
+  return 'Receita Mensal Estimada (R$)';
+}
+
+function updateBeneficioLabel() {
+  var lbl = document.getElementById('fi-beneficio-label');
+  if (lbl) lbl.textContent = getBeneficioLabel();
+}
+
+function calcPayback() {
+  if (S.info.temPayback === 'nao') return;
+  var inv = parseMoneyVal(S.info.investimento);
+  var rec = parseMoneyVal(S.info.receita);
+  var calcEl = document.getElementById('fi-payback-calc');
+  var pbInput = document.getElementById('fi-payback');
+  if (!calcEl || !pbInput) return;
+  if (!isNaN(inv) && inv > 0 && !isNaN(rec) && rec > 0) {
+    var meses = Math.round(inv / rec);
+    calcEl.textContent = 'Calculado: ' + meses + ' meses · ajuste se necessário';
+    calcEl.style.color = 'var(--amber)';
+    if (!pbInput.dataset.manual || pbInput.dataset.manual === 'false') {
+      pbInput.value = meses;
+      S.info.payback = String(meses);
+    }
+  } else {
+    calcEl.textContent = 'Preencha Investimento e Benefício Mensal para calcular automaticamente';
+    calcEl.style.color = 'var(--muted)';
+  }
+}
+
+
+// SIMPLE: set answer and update UI
+function setAns(id, val) {
+ // Determine which state object
+ if (id.charAt(0) === 'O' || id.charAt(0) === 'F' || id.charAt(0) === 'A') {
+ S.strat[id] = val;
+ } else {
+ S.pmo[id] = val;
+ }
+ // Invalida cache — força recálculo no próximo getStrat()/getPMO()
+ invalidateScoreCache();
+ // Update button styles
+ ['sim','par','nao'].forEach(function(v) {
+ var b = document.getElementById('rb-' + id + '-' + v);
+ if (b) b.className = 'btn-ans' + (v === val ? ' a-' + val : '');
+ });
+ // Show/hide justif
+ var jw = document.getElementById('jw-' + id);
+ if (jw) jw.style.display = (val === 'sim' || val === 'par') ? 'block' : 'none';
+ // Update live panel & button
+ saveDraft();
+ refreshSidePanel();
+}
+
+function setJust(id, val) {
+ if (id.charAt(0) === 'O' || id.charAt(0) === 'F' || id.charAt(0) === 'A') {
+ S.stratJust[id] = val;
+ } else {
+ S.pmoJust[id] = val;
+ }
+}
+
+// ═══════════════════════════════════════
+// CHECK COMPLETENESS (simple: every item has a non-null answer)
+// ═══════════════════════════════════════
+
+function isStratComplete() {
+ var all = OBJECTIVES.concat(FCS_ITEMS).concat(AVENUES);
+ for (var i = 0; i < all.length; i++) {
+ if (!S.strat[all[i].id]) return false;
+ }
+ return true;
+}
+
+function isPMOComplete() {
+ var all = PMO_PROJ.concat(PMO_SUST);
+ for (var i = 0; i < all.length; i++) {
+ if (!S.pmo[all[i].id]) return false;
+ }
+ return true;
+}
+
+// ═══════════════════════════════════════
+// SIDE PANEL LIVE UPDATE
+// ═══════════════════════════════════════
+
+function refreshSidePanel() {
+ if (S.step === 1) {
+ var sc = getStrat();
+ var totalQ = OBJECTIVES.length + FCS_ITEMS.length + AVENUES.length;
+ var answered = 0;
+ OBJECTIVES.concat(FCS_ITEMS).concat(AVENUES).forEach(function(i) { if (S.strat[i.id]) answered++; });
+ var pct = Math.round((answered / totalQ) * 100);
+ var col = sc.finalScore >= 70 ? 'var(--green)' : sc.finalScore >= 40 ? 'var(--amber)' : 'var(--red)';
+
+ var el = function(x) { return document.getElementById(x); };
+ if (el('live-final')) { el('live-final').textContent = sc.finalScore; el('live-final').style.color = col; }
+ if (el('live-obj')) el('live-obj').textContent = sc.objScore + '%';
+ if (el('live-fcs')) el('live-fcs').textContent = sc.fcsScore + '%';
+ if (el('live-ave')) el('live-ave').textContent = sc.aveScore + '%';
+ if (el('live-prog-pct')) el('live-prog-pct').textContent = pct + '%';
+ if (el('live-prog-fill')) el('live-prog-fill').style.width = pct + '%';
+
+ // Button
+ var btn = el('btn-strat-next');
+ if (btn) btn.disabled = !isStratComplete();
+
+ // Status text
+ if (el('strat-status') && isStratComplete()) {
+ var st = stratStatus(sc.finalScore);
+ el('strat-status').innerHTML = sc.finalScore < 40
+ ? '<div class="alert danger">⚠️ Score ' + sc.finalScore + '/100 — Alinhamento insuficiente.</div>'
+ : '<div class="alert success">Score ' + sc.finalScore + '/100 — ' + st.label + '. Pode avançar.</div>';
+ }
+
+ // Breakdown
+ if (el('live-bk')) {
+ var bk = '';
+ [{l:'Objetivos',v:sc.objScore},{l:'FCS',v:sc.fcsScore},{l:'Avenidas',v:sc.aveScore}].forEach(function(b) {
+ var c2 = b.v >= 70 ? 'var(--green)' : b.v >= 40 ? 'var(--amber)' : 'var(--red)';
+ bk += '<div class="bk-row"><span class="bk-label">' + b.l + '</span><div class="bk-track"><div class="bk-fill" style="width:' + b.v + '%;background:' + c2 + '"></div></div><span class="bk-val" style="color:' + c2 + '">' + b.v + '</span></div>';
+ });
+ el('live-bk').innerHTML = bk;
+ }
+ }
+
+ if (S.step === 2) {
+ var p = getPMO();
+ var el2 = function(x) { return document.getElementById(x); };
+ if (el2('live-proj')) el2('live-proj').textContent = p.proj.toFixed(1) + '/76';
+ if (el2('live-sust')) el2('live-sust').textContent = p.sust.toFixed(1) + '/40';
+ if (el2('live-trg')) el2('live-trg').textContent = p.triggers + '/5';
+ var total2 = PMO_PROJ.length + PMO_SUST.length;
+ var pct2 = Math.round((p.respondidas / total2) * 100);
+ if (el2('live-pmo-pct')) el2('live-pmo-pct').textContent = pct2 + '%';
+ if (el2('live-pmo-prog')) el2('live-pmo-prog').style.width = pct2 + '%';
+ var btn2 = el2('btn-pmo-next');
+ if (btn2) btn2.disabled = !isPMOComplete();
+ }
+}
+
+// ═══════════════════════════════════════
+// RENDER: question row
+// ═══════════════════════════════════════
+
+var TOOLTIPS = {"O1": "Considere se este projeto abre portas para novos clientes, regiões geográficas, segmentos de mercado ou canais de venda que a empresa ainda não atua ou atua de forma limitada.", "O2": "Avalie se o projeto é capaz de gerar novas receitas, aumentar margens de lucro, reduzir inadimplência ou criar modelos de monetização ainda não explorados.", "O3": "Pense se o projeto elimina etapas desnecessárias, reduz retrabalho, padroniza processos ou melhora a produtividade de áreas que hoje operam com baixa eficiência.", "O4": "Verifique se há potencial real de redução de despesas operacionais, renegociação de contratos, automação de atividades manuais ou ganho de throughput sem aumento de custo.", "O5": "Considere se o projeto moderniza sistemas legados, introduz automação, inteligência artificial, análise de dados ou digitaliza processos que ainda dependem de papel ou planilhas.", "O6": "Avalie se o projeto melhora a satisfação, agilidade no atendimento, personalização ou a jornada percebida pelo cliente — seja ele interno (colaborador) ou externo.", "O7": "Considere se o projeto atende exigências regulatórias, reduz passivos legais, contribui para metas ESG, ou melhora a percepção de responsabilidade e governança da companhia.", "F1": "Verifique se a infraestrutura de TI, sistemas disponíveis e capacidade técnica da empresa são suficientes para suportar a execução do projeto, ou se há um plano claro para suprir lacunas.", "F2": "Avalie se os profissionais envolvidos já possuem as habilidades necessárias ou se existe um plano de capacitação, contratação ou parceria para desenvolvê-las ao longo do projeto.", "F3": "Considere se o sucesso do projeto depende ou se beneficia de parcerias com fornecedores, startups, consultorias, entidades do setor ou outros atores externos ao negócio.", "F4": "Verifique se o projeto respeita regulamentações setoriais, legislações trabalhistas, tributárias, de proteção de dados (LGPD) ou outras normas aplicáveis ao contexto da empresa.", "F5": "Avalie se o projeto utiliza dados da empresa de forma estruturada para tomada de decisão, ou se gera dados que poderão ser aproveitados em análises futuras e inteligência de negócio.", "F6": "Considere se o projeto prevê ações de comunicação, treinamento e engajamento das pessoas impactadas, evitando resistência e garantindo a adoção efetiva das mudanças propostas.", "A1": "Avalie se o projeto cria condições concretas para conquistar clientes em segmentos, regiões ou nichos onde a empresa ainda não está presente ou tem presença marginal.", "A2": "Verifique se o projeto viabiliza ofertas complementares, pacotes de serviços ou upgrades que aumentem o valor médio das transações com clientes já existentes.", "A3": "Considere se o projeto tem impacto direto e mensurável na linha de custos — como redução de fornecedores, automação de processos caros ou eliminação de despesas recorrentes.", "A4": "Avalie se o projeto libera capacidade das equipes, acelera ciclos de trabalho ou permite que a mesma estrutura produza mais resultados sem aumento proporcional de recursos.", "P1": "Um projeto bem definido tem objetivo claro (o que se quer alcançar), escopo delimitado (o que está dentro e fora), data de início prevista e critério de encerramento estabelecido.", "P2": "Diferencia-se de uma atividade rotineira por produzir algo novo ou transformar uma realidade existente — um sistema, um processo, um produto ou uma capacidade organizacional.", "P3": "Requer coordenação ativa entre duas ou mais áreas, com dependências, papéis definidos e necessidade de alinhamento contínuo. Projetos de área única geralmente se enquadram como sustentação.", "P4": "O impacto deve ser tangível: receita, custo, risco, experiência do cliente, conformidade ou reputação. Iniciativas de baixo impacto tendem a se enquadrar como melhoria contínua.", "P5": "Avalie se a iniciativa requer um plano com datas, responsáveis, entregas intermediárias e acompanhamento sistemático — típico de projetos formalizados no PMO.", "P6": "Inclui contratação de fornecedores, aquisição de software ou hardware, horas de consultoria, terceirização ou qualquer desembolso financeiro vinculado à execução.", "P7": "Iniciativas que tocam sistemas críticos, produtos ou processos regulados geralmente requerem ciclos formais de validação, aprovação e controle de entrada em produção.", "P8": "Considere riscos técnicos, regulatórios, operacionais ou de negócio que, se materializados, possam comprometer resultados ou gerar impactos relevantes para a organização.", "P9": "Projetos estratégicos ou de alta complexidade geralmente necessitam de um patrocinador executivo com poder de decisão e de um fórum formal de acompanhamento e deliberação.", "P10": "Avalie se a entrega do projeto exige que pessoas mudem a forma como trabalham, que sistemas sejam substituídos ou que modelos operacionais sejam redesenhados.", "P11": "Identifique se o projeto depende de entregas de outras iniciativas, de terceiros, de aprovações regulatórias ou de integrações sistêmicas que fogem ao controle da equipe.", "P12": "Esforços acima de 160 horas ou projetos com duração superior a 8 semanas geralmente iniciativam planejamento formal, alocação de recursos e acompanhamento estruturado.", "S1": "Iniciativas corretivas (fix de bug, ajuste operacional), recorrentes (relatório mensal, manutenção periódica) ou rotineiras (atendimento de ticket padrão) tipicamente se enquadram como sustentação.", "S2": "Verifique se a área solicitante, com sua estrutura atual e sem necessidade de governança adicional, consegue entregar a iniciativa dentro do prazo e com qualidade esperada.", "S3": "Um ajuste de escopo restrito atinge uma única área, sistema ou processo, sem irradiar impactos para outras partes da organização — característica típica de sustentação.", "S4": "Baixo impacto significa que, se não executado, o negócio continua operando sem degradação relevante. Baixa complexidade indica que a solução é conhecida e não exige inovação.", "S5": "Iniciativas que podem ser entregues em até 15 dias úteis, com recursos disponíveis e sem dependências relevantes externas, geralmente não justificam a estrutura formal de um projeto."};
+
+function qRow(q, cssType) {
+ var id = q.id;
+ var isStrat = (id.charAt(0)==='O'||id.charAt(0)==='F'||id.charAt(0)==='A');
+ var ans = isStrat ? S.strat[id] : S.pmo[id];
+ var justVal = isStrat ? (S.stratJust[id]||'') : (S.pmoJust[id]||'');
+ var showJust = (ans==='sim'||ans==='par') ? 'block' : 'none';
+ var tip = TOOLTIPS[id] || '';
+ var helpBtn = tip ? '<span class="q-help" data-tip="' + tip + '" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"><i style="font-style:italic;font-family:Poppins,sans-serif">i</i></span>' : '';
+ return '<div class="q-row">' +
+ '<div class="q-num ' + cssType + '">' + (q.num || id) + '</div>' +
+ '<div class="q-body">' +
+ '<div class="q-meta">' + q.dim +
+ (q.trigger ? ' <span class="trigger-tag">TRIGGER</span>' : '') +
+ (q.peso ? ' <span style="color:var(--dim);font-size:9px">· peso ' + q.peso + '</span>' : '') +
+ '</div>' +
+ '<div class="q-text">' + (q.title ? '<strong style="color:var(--text)">' + q.title + '</strong><br>' + q.text + ' ' + helpBtn : q.text + ' ' + helpBtn) + '</div>' +
+ '<div class="justif-wrap" id="jw-' + id + '" style="display:' + showJust + '">' +
+ '<textarea placeholder="Descreva brevemente..." oninput="autoResize(this);setJust(\'' + id + '\',this.value)">' + esc(justVal) + '</textarea>' +
+ '</div>' +
+ '</div>' +
+ '<div class="q-btns">' +
+ '<button class="btn-ans' + (ans==='sim'?' a-sim':'') + '" id="rb-' + id + '-sim" onclick="setAns(\'' + id + '\',\'sim\')">Sim</button>' +
+ '<button class="btn-ans' + (ans==='par'?' a-par':'') + '" id="rb-' + id + '-par" onclick="setAns(\'' + id + '\',\'par\')">Parcial</button>' +
+ '<button class="btn-ans' + (ans==='nao'?' a-nao':'') + '" id="rb-' + id + '-nao" onclick="setAns(\'' + id + '\',\'nao\')">Não</button>' +
+ '</div>' +
+ '</div>';
+}
+
+function dimSep(label, cls) {
+ return '<div class="dim-sep"><div class="dim-line"></div><div class="dim-label ' + cls + '">' + label + '</div><div class="dim-line"></div></div>';
+}
+
+// ═══════════════════════════════════════
+// STEPPER
+// ═══════════════════════════════════════
+
+function updateStepper() {
+ for (var i = 0; i <= 3; i++) {
+ var sc = document.getElementById('sc-' + i);
+ var sl = document.getElementById('sl-' + i);
+ if (!sc) continue;
+ sc.className = 'step-circle' + (i === S.step ? ' active' : i < S.step ? ' done' : '');
+ sl.className = 'step-label' + (i === S.step ? ' active' : i < S.step ? ' done' : '');
+ sc.textContent = i < S.step ? '✓' : (i + 1);
+ if (i < 3) {
+ var cn = document.getElementById('conn-' + i);
+ if (cn) cn.className = 'step-connector' + (i < S.step ? ' done' : '');
+ }
+ }
+}
+
+// ═══════════════════════════════════════
+// PAGE RENDERERS
+// ═══════════════════════════════════════
+
+function renderStep0() {
+ var d = new Date().toISOString().split('T')[0];
+ if (!S.info.data) S.info.data = d;
+ return '<div class="fade-in"><div class="card">' +
+ '<div class="card-header"><div><h2>Identificação da Iniciativa</h2><p>Preencha todas as informações antes de iniciar a análise</p></div></div>' +
+ '<div class="card-body"><div class="fields-grid">' +
+ '<div class="field span2"><label>Nome da Iniciativa</label><input type="text" id="fi-nome" value="' + esc(S.info.nome) + '" placeholder="Ex: Implantação de Portal de RH..." oninput="S.info.nome=this.value"/></div>' +
+ '<div class="field"><label>ID / Protocolo</label><input type="text" id="fi-id" value="' + esc(S.info.id_protocolo) + '" readonly style="background:var(--surface3);color:var(--blue);font-family:Poppins,sans-serif;font-weight:600;cursor:default"/></div>' +
+ '<div class="field"><label>Data de Solicitação</label><input type="date" id="fi-data" value="' + esc(S.info.data||d) + '" oninput="S.info.data=this.value"/></div>' +
+ '<div class="field"><label>Área Demandante</label><input type="text" id="fi-area" value="' + esc(S.info.area) + '" placeholder="Ex: Comercial, TI, Financeiro..." oninput="S.info.area=this.value"/></div>' +
+ '<div class="field"><label>Categoria da Iniciativa <span style="color:var(--red)">*</span></label>' +
+ '<select id="fi-categoria" onchange="S.info.categoria=this.value" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 13px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none;transition:border-color .2s;cursor:pointer">' +
+ '<option value="" disabled ' + (!S.info.categoria?'selected':'') + '>Selecione a categoria...</option>' +
+ '<option value="Crescimento / Expansão"' + (S.info.categoria==="Crescimento / Expansão"?" selected":"") + '>Crescimento / Expansão</option>' +
+ '<option value="Eficiência / Produtividade"' + (S.info.categoria==="Eficiência / Produtividade"?" selected":"") + '>Eficiência / Produtividade</option>' +
+ '<option value="Estruturante / Fundação"' + (S.info.categoria==="Estruturante / Fundação"?" selected":"") + '>Estruturante / Fundação</option>' +
+ '<option value="Mandatório / Regulatório"' + (S.info.categoria==="Mandatório / Regulatório"?" selected":"") + '>Mandatório / Regulatório</option>' +
+ '</select></div>' +
+ '<div class="field"><label>Patrocinador / Gestor</label><select id="fi-gestor" onchange="S.info.gestor=this.value" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 13px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none;transition:border-color .2s;cursor:pointer"><option value="" disabled ' + (!S.info.gestor?'selected':'') + '>Selecione o patrocinador...</option><option value="Alex Pazini"' + (S.info.gestor==="Alex Pazini"?" selected":"") + '>Alex Pazini</option><option value="Raquel Oda"' + (S.info.gestor==="Raquel Oda"?" selected":"") + '>Raquel Oda</option><option value="Fernanda Peixoto"' + (S.info.gestor==="Fernanda Peixoto"?" selected":"") + '>Fernanda Peixoto</option></select></div>' +
+ '<div class="field"><label>Responsável pelo Preenchimento</label><input type="text" id="fi-resp" value="' + esc(S.info.resp) + '" placeholder="Nome do responsável..." oninput="S.info.resp=this.value"/></div>' +
+ '<div class="field"><label>Classificação Validada Por</label><input type="text" id="fi-class" value="' + esc(S.info.classificacao) + '" placeholder="Nome do validador PMO..." oninput="S.info.classificacao=this.value"/></div>' +
+ '<div class="field"><label>Investimento Previsto (R$)</label><input type="text" id="fi-invest" value="' + esc(S.info.investimento) + '" placeholder="Ex: R$ 50.000,00" oninput="formatMoneyInput(this,\'investimento\')"/></div>' +
+ '<div class="field"><label>Tipo de Benefício</label>' +
+ '<select id="fi-tipo-beneficio" onchange="S.info.tipoBeneficio=this.value;updateBeneficioLabel();calcPayback()" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 13px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none;transition:border-color .2s;cursor:pointer">' +
+ '<option value="" disabled ' + (!S.info.tipoBeneficio?'selected':'') + '>Selecione o tipo de benefício...</option>' +
+ '<option value="receita"' + (S.info.tipoBeneficio==="receita"?' selected':'') + '>Aumento de Receita</option>' +
+ '<option value="reducao"' + (S.info.tipoBeneficio==="reducao"?' selected':'') + '>Redução de Despesa</option>' +
+ '<option value="evitado"' + (S.info.tipoBeneficio==="evitado"?' selected':'') + '>Custo Evitado</option>' +
+ '<option value="saving"'  + (S.info.tipoBeneficio==="saving" ?' selected':'') + '>Saving</option>' +
+ '</select></div>' +
+ '<div class="field"><label id="fi-beneficio-label">' + getBeneficioLabel() + '</label><input type="text" id="fi-receita" value="' + esc(S.info.receita) + '" placeholder="Ex: R$ 30.000,00" oninput="formatMoneyInput(this,\'receita\')"/></div>' +
+'<div class="field"><label>Duração do Benefício (meses)</label><div style="display:flex;gap:8px;align-items:center"><input type="number" id="fi-duracao" min="1" value="' + esc(S.info.duracaoBeneficio) + '" placeholder="Ex: 24" oninput="S.info.duracaoBeneficio=this.value;calcBeneficioTotal()" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 13px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none;transition:border-color .2s"/><span style="white-space:nowrap;font-size:12px;color:var(--muted);min-width:42px">meses</span></div><div id="fi-beneficio-total" style="font-size:10px;color:var(--muted);margin-top:4px"></div></div>' +
+paybackRadioHtml() +
+    paybackFieldHtml() +
+    '<div class="field span2"><label>Descrição Resumida</label><textarea id="fi-desc" placeholder="Descreva brevemente o objetivo e contexto da iniciativa..." oninput="autoResize(this);S.info.desc=this.value">' + esc(S.info.desc) + '</textarea></div>' +
+ '<div class="field span2"><label>Justificativa do Investimento / Benefício</label><textarea id="fi-just-invest" placeholder="Descreva a necessidade do investimento e o benefício esperado (receita, economia, saving)..." oninput="autoResize(this);S.info.just_investimento=this.value">' + esc(S.info.just_investimento) + '</textarea></div>' +
+ '</div>' +
+ '<div class="nav-row"><span></span><button class="btn btn-primary" onclick="goStep(1)">Iniciar Análise Estratégica →</button></div>' +
+ '</div></div></div>';
+}
+
+function renderStep1() {
+ var html = '<div class="fade-in"><div class="layout"><div class="col-main">';
+ html += '<div class="phase-indicator strat">Fase 1 de 2 — Alinhamento Estratégico 2026</div>';
+
+ // Objetivos
+ html += '<div class="card"><div class="card-header"><div><h2>Objetivos Estratégicos</h2><p>7 objetivos · peso 45%</p></div></div><div class="card-body">';
+ var lastDim = '';
+ OBJECTIVES.forEach(function(o) { if (o.dim !== lastDim) { lastDim = o.dim; html += dimSep(o.dim, 'strat'); } html += qRow(o, 'strat'); });
+ html += '</div></div>';
+
+ // FCS
+ html += '<div class="card"><div class="card-header"><div><h2>Fatores Críticos de Sucesso</h2><p>6 fatores · peso 30%</p></div></div><div class="card-body">';
+ lastDim = '';
+ FCS_ITEMS.forEach(function(f) { if (f.dim !== lastDim) { lastDim = f.dim; html += dimSep(f.dim, 'strat'); } html += qRow(f, 'strat'); });
+ html += '</div></div>';
+
+ // Avenidas
+ html += '<div class="card"><div class="card-header"><div><h2>Avenidas de Crescimento</h2><p>4 avenidas · peso 25%</p></div></div><div class="card-body">';
+ AVENUES.forEach(function(a) { html += qRow(a, 'strat'); });
+ html += '</div></div>';
+
+ html += '<div id="strat-status"></div>';
+ html += '<div class="nav-row"><button class="btn btn-secondary" onclick="goStep(0)">← Voltar</button><div><button class="btn btn-primary" id="btn-strat-next" onclick="goToEligibility()" disabled>Avançar para Elegibilidade PMO →</button></div></div>';
+
+ html += '</div>'; // col-main
+
+ // Sidebar
+ var sc = getStrat();
+ var col = sc.finalScore >= 70 ? 'var(--green)' : sc.finalScore >= 40 ? 'var(--amber)' : 'var(--red)';
+ html += '<div class="col-side">';
+ html += '<div class="side-card"><h4>Score Final</h4><div id="live-final" style="font-family:Poppins,sans-serif;font-weight:600;font-size:52px;line-height:1;color:' + col + '">' + sc.finalScore + '</div><div style="font-size:10px;color:var(--muted);margin-top:4px">' + stratStatus(sc.finalScore).label + '</div></div>';
+ html += '<div class="side-card"><h4>Progresso</h4><div class="gp-row"><span class="gp-label">Respondidas</span><span class="gp-pct" id="live-prog-pct">0%</span></div><div class="gp-track"><div class="gp-fill" id="live-prog-fill" style="width:0%"></div></div></div>';
+ html += '<div class="side-card"><h4>Breakdown</h4><div class="breakdown" id="live-bk"><span style="font-size:11px;color:var(--muted)">Responda as perguntas...</span></div></div>';
+ html += '<div class="side-card" style="font-size:11px;color:var(--muted);line-height:1.6"><h4>Pesos</h4><div>Objetivos: <strong style="color:var(--text)">45%</strong></div><div>FCS: <strong style="color:var(--text)">30%</strong></div><div>Avenidas: <strong style="color:var(--text)">25%</strong></div><hr class="div" style="margin:10px 0"><div>Score ≥ 80 → Máxima</div><div>Score ≥ 60 → Alta</div><div>Score ≥ 40 → Média</div><div>Score &lt; 40 → Revisar</div></div>';
+ html += '</div>'; // col-side
+ html += '</div></div>'; // layout, fade-in
+
+ return html;
+}
+
+function goToEligibility() {
+ var sc = getStrat();
+ if (sc.finalScore < 40) {
+ S._blocked = true;
+ S.step = 2;
+ render();
+ } else {
+ S._blocked = false;
+ goStep(2);
+ }
+}
+
+function skipBlock() {
+ S._blocked = false;
+ S._withRessalva = true;
+ render();
+}
+
+function renderStep2() {
+ var sc = getStrat();
+ if (S._blocked) {
+ return '<div class="fade-in"><div class="block-screen">' +
+ '<div class="block-icon"></div><div class="block-title">Alinhamento Insuficiente</div>' +
+ '<div class="block-desc">Score <strong style="color:var(--red)">' + sc.finalScore + '/100</strong> — abaixo do mínimo de 40 pontos.</div>' +
+ '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">' +
+ '<button class="btn btn-secondary" onclick="goStep(1)">← Revisar</button>' +
+ '<button class="btn btn-primary" onclick="skipBlock()">Avançar com ressalva</button>' +
+ '</div></div></div>';
+ }
+
+ var html = '<div class="fade-in">';
+ html += '<div class="phase-transition"><div class="phase-badge strat" style="margin-bottom:10px">Alinhamento: ' + sc.finalScore + '/100 — ' + stratStatus(sc.finalScore).label + '</div><h3>Fase 2: Elegibilidade PMO</h3><p>O projeto passou pelo filtro estratégico. Avalie as dimensões operacionais.</p></div>';
+ html += '<div class="layout"><div class="col-main">';
+ html += '<div class="phase-indicator pmo">Fase 2 de 2 — Elegibilidade PMO</div>';
+
+ // Projeto
+ html += '<div class="card"><div class="card-header"><div><h2>Dimensões de Projeto</h2><p>12 perguntas · score máx. 76</p></div></div><div class="card-body">';
+ var lastDim = '';
+ PMO_PROJ.forEach(function(q) { if (q.dim !== lastDim) { lastDim = q.dim; html += dimSep(q.dim, 'pmo'); } html += qRow(q, 'pmo'); });
+ html += '</div></div>';
+
+ // Sustentação
+ html += '<div class="card"><div class="card-header"><div><h2>Dimensões de Sustentação</h2><p>5 perguntas · score máx. 40</p></div></div><div class="card-body">';
+ PMO_SUST.forEach(function(q) { html += qRow(q, 'pmo-sust'); });
+ html += '</div></div>';
+
+ html += '<div class="nav-row"><button class="btn btn-secondary" onclick="goStep(1)">← Voltar</button><div><button class="btn btn-primary" id="btn-pmo-next" onclick="goStep(3)" disabled>Ver Resultado Integrado →</button></div></div>';
+ html += '</div>'; // col-main
+
+ // Sidebar
+ var p = getPMO();
+ html += '<div class="col-side">';
+ html += '<div class="side-card"><h4>Score Projeto</h4><div id="live-proj" style="font-family:Poppins,sans-serif;font-weight:600;font-size:32px;color:var(--blue)">' + p.proj.toFixed(1) + '/76</div></div>';
+ html += '<div class="side-card"><h4>Score Sustentação</h4><div id="live-sust" style="font-family:Poppins,sans-serif;font-weight:600;font-size:32px;color:var(--green)">' + p.sust.toFixed(1) + '/40</div></div>';
+ html += '<div class="side-card"><h4>Triggers Ativos</h4><div id="live-trg" style="font-family:Poppins,sans-serif;font-weight:600;font-size:32px;color:var(--amber)">' + p.triggers + '/5</div></div>';
+ html += '<div class="side-card"><h4>Progresso PMO</h4><div class="gp-row"><span class="gp-label">Respondidas</span><span class="gp-pct" id="live-pmo-pct">0%</span></div><div class="gp-track"><div class="gp-fill" id="live-pmo-prog" style="width:0%"></div></div></div>';
+ html += '</div>';
+
+ html += '</div></div>'; // layout, fade-in
+ return html;
+}
+
+function buildDesc(cls, level, finalScore) {
+ var descs = { projeto:'Iniciativa estruturada com governança formal.', sustentacao:'Perfil operacional ou corretivo.', melhoria:'Melhoria incremental e delimitada.', pmo:'Sinais ambíguos — PMO deve revisar.' };
+ var levels = { max:'Altíssimo alinhamento', high:'Bom alinhamento', mid:'Alinhamento parcial', low:'Baixo alinhamento' };
+ return (descs[cls]||'') + ' ' + (levels[level]||'') + ' (score ' + finalScore + '/100).';
+}
+
+function buildRecs(sc, p, cls, level) {
+ var r = [];
+ if (level==='max'||level==='high') { r.push('Comunicar importância estratégica para toda organização.'); r.push('Definir KPIs alinhados aos objetivos estratégicos.'); }
+ if (level==='mid') { r.push('Revisar escopo para ampliar contribuição estratégica.'); r.push('Documentar capacidades que alimentam objetivos futuros.'); }
+ if (level==='low') { r.push('Mapear objetivos estratégicos antes de formalizar.'); r.push('Avaliar reformulação para aumentar alinhamento.'); }
+ if (cls==='projeto') { r.push('Definir sponsor, cronograma e plano de comunicação.'); if (p.triggers<3) r.push('Triggers insuficientes — revisar escopo.'); }
+ if (cls==='melhoria') r.push('Formalizar com rito simplificado: escopo, responsável, prazo.');
+ if (cls==='sustentacao') r.push('Registrar na fila operacional com SLA.');
+ if (cls==='pmo') { r.push('Agendar análise com PMO.'); r.push(p.parciais + ' parciais indicam ambiguidade.'); }
+ if (sc.fcsCov < 2) r.push('Mapear FCS com baixa cobertura.');
+ return r;
+}
+
+function renderStep3() {
+ var sc = getStrat();
+ var p = getPMO();
+ var cls = classifyPMO(p.proj, p.sust, p.triggers, p.parciais, p.respondidas);
+ var stSt = stratStatus(sc.finalScore);
+ var mat = (MATRIX[stSt.level]||{})[cls] || { text:'Indefinido', cls:'c-low', esc:false, acao:'Consultar PMO.' };
+ var pmoLabels = { projeto:'PROJETO', sustentacao:'SUSTENTAÇÃO', melhoria:'MELHORIA CONTÍNUA', pmo:'AVALIAÇÃO PMO', vazio:'—' };
+ var pmoColors = { projeto:'var(--blue)', sustentacao:'var(--green)', melhoria:'var(--amber)', pmo:'var(--purple)', vazio:'var(--muted)' };
+ var heroMap = { projeto:'r-projeto', sustentacao:'r-sustentacao', melhoria:'r-melhoria', pmo:'r-pmo' };
+ var recs = buildRecs(sc, p, cls, stSt.level);
+
+ // Send to Sheets
+ if (!S._saved) {
+ S._saved = true; // marca imediatamente para não chamar 2x no mesmo render
+ sendToSheets().then(function(result) {
+ var el = document.getElementById('save-status');
+ if (el) {
+ if (result.ok) {
+        // Atualiza protocolo com o ID real gerado pelo servidor
+        if (result.id) {
+          S.info.id_protocolo = result.id;
+          // Atualiza o campo exibido na tela
+          var protoEl = document.getElementById('fi-id');
+          if (protoEl) protoEl.value = result.id;
+        }
+        clearDraft(); // triagem concluída e salva — não deve mais ser restaurada como rascunho
+        el.innerHTML = '<div class="alert success">✅ Triagem gravada com sucesso! ID: <strong>' + (result.id || S.info.id_protocolo || '—') + '</strong></div>';
+      }
+ else if (result.reason === 'url_not_set') el.innerHTML = '<div class="alert warn">⚠️ URL do Apps Script não configurada.</div>';
+ else { S._saved = false; el.innerHTML = '<div class="alert danger">❌ Erro ao salvar: ' + (result.error||result.reason||'Erro desconhecido') + '<br><small style="opacity:.7">Verifique se o GAS foi reimplantado com acesso \"Qualquer pessoa\".</small><br><button class="btn btn-secondary" style="margin-top:8px;font-size:12px;padding:6px 14px" onclick="S._saved=false;render()">↺ Tentar novamente</button></div>'; }
+ }
+ });
+ }
+
+ // Matrix
+ var stratLevels = ['max','high','mid','low'];
+ var stratLabels = { max:'Máxima (≥80)', high:'Alta (60–79)', mid:'Média (40–59)', low:'Baixa (<40)' };
+ var pmoClasses = ['projeto','melhoria','sustentacao','pmo'];
+ var pmoCellLabels = { projeto:'Projeto', melhoria:'Melhoria', sustentacao:'Sustentação', pmo:'Av. PMO' };
+ var matrixHTML = '<div class="matrix-cell header-col"></div>';
+ pmoClasses.forEach(function(c) { matrixHTML += '<div class="matrix-cell header-row">' + pmoCellLabels[c] + '</div>'; });
+ stratLevels.forEach(function(sl) {
+ matrixHTML += '<div class="matrix-cell header-col">' + stratLabels[sl] + '</div>';
+ pmoClasses.forEach(function(pc) {
+ var cell = (MATRIX[sl]||{})[pc] || {};
+ var isActive = sl === stSt.level && pc === cls;
+ matrixHTML += '<div class="matrix-cell ' + (cell.cls||'c-low') + (isActive?' highlight':'') + '">' + (isActive?'★ ':'') + (cell.text||'—') + '</div>';
+ });
+ });
+
+ var h = '<div class="fade-in">';
+ h += '<div id="save-status" style="margin-bottom:16px"><div class="alert info">Salvando triagem...</div></div>';
+ if (S._withRessalva) h += '<div class="alert warn" style="margin-bottom:16px">Resultado com ressalva: alinhamento abaixo do mínimo (' + sc.finalScore + '/100).</div>';
+
+ h += '<div class="result-hero ' + (heroMap[cls]||'r-pmo') + '"><div class="result-eyebrow">Resultado Integrado · ' + esc(S.info.nome||'Iniciativa') + '</div>';
+ h += '<div class="result-title" style="color:' + pmoColors[cls] + '">' + mat.text + '</div>';
+ h += '<div class="result-sub">' + buildDesc(cls, stSt.level, sc.finalScore) + '</div>';
+ h += '<div class="result-action ' + (mat.esc?'obrig':'livre') + '">' + (mat.esc?'Escalonamento ao PMO — OBRIGATÓRIO':'Sem necessidade de escalonamento') + '</div></div>';
+
+ h += '<div class="scores-row">';
+ h += '<div class="score-summary-box"><div class="score-summary-label">Alinhamento Estratégico</div><div class="score-summary-val" style="color:' + stSt.color + '">' + sc.finalScore + '<span style="font-size:18px;opacity:.5">/100</span></div><div class="score-summary-detail">' + stSt.label + '</div><div style="font-size:10px;color:var(--muted);margin-top:8px">Obj: ' + sc.objScore + '% · FCS: ' + sc.fcsScore + '% · Ave: ' + sc.aveScore + '%</div></div>';
+ h += '<div class="score-summary-box"><div class="score-summary-label">Elegibilidade PMO</div><div class="score-summary-val" style="color:' + pmoColors[cls] + '">' + pmoLabels[cls] + '</div><div class="score-summary-detail">Proj: ' + p.proj.toFixed(0) + '/76 · Sust: ' + p.sust.toFixed(0) + '/40 · Triggers: ' + p.triggers + '/5</div></div>';
+ h += '</div>';
+
+ h += '<div class="recs-wrap"><div class="recs-title">Ação Recomendada</div>';
+ h += '<div class="alert ' + (mat.esc?'warn':'success') + '" style="margin-bottom:16px">' + (mat.esc?'':'✓') + ' <strong>' + mat.acao + '</strong></div>';
+ recs.forEach(function(r) { h += '<div class="rec-item"><span class="rec-arrow">→</span><span>' + r + '</span></div>'; });
+ h += '</div>';
+
+ h += '<div class="matrix-wrap"><div class="matrix-title">Matriz de Posicionamento</div><p style="font-size:12px;color:var(--muted);margin-bottom:14px">A célula destacada (★) é o posicionamento desta iniciativa.</p><div class="matrix-grid">' + matrixHTML + '</div></div>';
+
+ h += '<div class="card" style="margin-top:24px"><div class="card-header"><div><h2>Informações da Iniciativa</h2></div></div><div class="card-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px">';
+ h += '<div><span style="color:var(--muted)">Nome:</span> <strong>' + esc(S.info.nome||'—') + '</strong></div>';
+ h += '<div><span style="color:var(--muted)">Área:</span> <strong>' + esc(S.info.area||'—') + '</strong></div>';
+ h += '<div><span style="color:var(--muted)">Gestor:</span> <strong>' + esc(S.info.gestor||'—') + '</strong></div>';
+ h += '<div><span style="color:var(--muted)">Responsável:</span> <strong>' + esc(S.info.resp||'—') + '</strong></div>';
+ h += '</div></div></div>';
+
+ h += '<div class="ai-insights-wrap" id="ai-insights-wrap">';
+ h += '<div class="ai-insights-header">';
+ h += '<div class="ai-insights-icon">&#9881;</div>';
+ h += '<div><div class="ai-insights-title">Insights da IA do PMO</div><div class="ai-insights-sub">Análise por especialista sênior em seguros e consórcios</div></div>';
+ h += '<span class="ai-insights-badge">Gemini AI</span>';
+ h += '</div>';
+ h += '<div class="ai-insights-body" id="ai-insights-body">';
+ h += '<div class="ai-loading"><div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div><div class="ai-loading-text">Consultando especialista IA...<br>Analisando contexto e pesquisando benchmarks do setor</div></div>';
+ h += '</div>';
+ h += '</div>';
+
+ h += '<div class="nav-row" style="margin-top:28px"><button class="btn btn-secondary" onclick="goStep(2)">← Revisar</button><div style="display:flex;gap:10px"><button class="btn-pdf" id="btn-pdf" onclick="generatePDF()">Baixar Relatório PDF</button><button class="btn btn-primary" onclick="resetAll()">↺ Nova Triagem</button></div></div>';
+ h += '</div>';
+ return h;
+}
+
+// ═══════════════════════════════════════
+// GOOGLE SHEETS
+// ═══════════════════════════════════════
+
+function buildPayload() {
+ var sc = getStrat();
+ var p = getPMO();
+ var cls = classifyPMO(p.proj, p.sust, p.triggers, p.parciais, p.respondidas);
+ var stSt = stratStatus(sc.finalScore);
+ var mat = (MATRIX[stSt.level]||{})[cls] || { text:'Indefinido', esc:false, acao:'' };
+ var pmoLabels = { projeto:'PROJETO', sustentacao:'SUSTENTAÇÃO', melhoria:'MELHORIA CONTÍNUA', pmo:'AVALIAÇÃO PMO', vazio:'—' };
+ var stratLevelLabels = { max:'Máxima (≥80)', high:'Alta (60–79)', mid:'Média (40–59)', low:'Baixa (<40)' };
+
+ var mapGroup = function(ids, ansObj, justObj) {
+ var out = {};
+ ids.forEach(function(id) { out[id] = { resp: ansObj[id] || '', just: justObj[id] || '' }; });
+ return out;
+ };
+ var stratIds = ['O1','O2','O3','O4','O5','O6','O7','F1','F2','F3','F4','F5','F6','A1','A2','A3','A4'];
+
+ return {
+ info: S.info,  // já inclui S.info.payback
+ scores: { finalScore:sc.finalScore, objScore:sc.objScore, fcsScore:sc.fcsScore, aveScore:sc.aveScore, fcsCoverage:sc.fcsCov, aveCoverage:sc.aveCov, stratLevel:stratLevelLabels[stSt.level] },
+ pmo: { enquadramento:pmoLabels[cls], scoreProj:parseFloat(p.proj.toFixed(1)), scoreSust:parseFloat(p.sust.toFixed(1)), triggers:p.triggers, parciais:p.parciais },
+ result: { texto:mat.text, escalonamento:mat.esc, acao:mat.acao, bloqueioEstrategico:!!S._withRessalva },
+ objetivos: mapGroup(['O1','O2','O3','O4','O5','O6','O7'], S.strat, S.stratJust),
+ fcs: mapGroup(['F1','F2','F3','F4','F5','F6'], S.strat, S.stratJust),
+ avenidas: mapGroup(['A1','A2','A3','A4'], S.strat, S.stratJust),
+ projPMO: mapGroup(['P1','P2','P3','P4','P5','P6','P7','P8','P9','P10','P11','P12'], S.pmo, S.pmoJust),
+ sustPMO: mapGroup(['S1','S2','S3','S4','S5'], S.pmo, S.pmoJust),
+ };
+}
+
+function sendToSheets() {
+  if (!APPS_SCRIPT_URL) return Promise.resolve({ ok:false, reason:'url_not_set' });
+
+  var timeoutId;
+  var timeoutPromise = new Promise(function(resolve) {
+    timeoutId = setTimeout(function() {
+      resolve({ ok:false, error:'Timeout — verifique se o GAS está implantado corretamente.' });
+    }, 25000);
+  });
+
+  var fetchPromise = fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    // 'text/plain' evita o preflight CORS (OPTIONS) que o Apps Script não trata bem
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'saveTriagem', data: buildPayload() })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(resp) {
+    clearTimeout(timeoutId);
+    if (resp && resp.status === 'ok') return { ok:true, id: resp.id || '' };
+    return { ok:false, error: resp ? (resp.message || 'Erro no servidor') : 'Resposta inválida' };
+  })
+  .catch(function() {
+    clearTimeout(timeoutId);
+    return { ok:false, error:'Falha de rede. Verifique a URL do GAS e se está reimplantado.' };
+  });
+
+  return Promise.race([fetchPromise, timeoutPromise]);
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+
+function goStep(n) {
+ S.step = n;
+ if (n !== 2) S._blocked = false;
+ render();
+ window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function resetAll() {
+ clearDraft();
+ S = freshState();
+ render();
+}
+
+function render() {
+ updateStepper();
+ var el = document.getElementById('app-content');
+ if (S.step === 0) el.innerHTML = renderStep0();
+ else if (S.step === 1) el.innerHTML = renderStep1();
+ else if (S.step === 2) el.innerHTML = renderStep2();
+ else if (S.step === 3) { el.innerHTML = renderStep3(); setTimeout(function(){ if (typeof callGeminiInsights === 'function') callGeminiInsights(); }, 300); }
+ refreshSidePanel();
+}
+
+
+// ═══════════════════════════════════════
+// THEME TOGGLE
+// ═══════════════════════════════════════
+
+function toggleTheme() {
+ var html = document.documentElement;
+ var current = html.getAttribute('data-theme');
+ var next = current === 'light' ? 'dark' : 'light';
+ html.setAttribute('data-theme', next);
+ document.getElementById('icon-sun').className = 'theme-icon' + (next === 'light' ? ' inactive' : '');
+ document.getElementById('icon-moon').className = 'theme-icon' + (next === 'dark' ? ' inactive' : '');
+ try { localStorage.setItem('pmo-theme', next); } catch(e) {}
+}
+
+// Restore saved theme — only set attribute, icons updated after render
+(function() {
+  try {
+    var saved = localStorage.getItem('pmo-theme');
+    if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  } catch(e) {}
+})();
+
+// ═══════════════════════════════════════
+// PDF REPORT GENERATION
+// ═══════════════════════════════════════
+
+function generatePDF() {
+  var btn = document.getElementById('btn-pdf');
+  if (btn) { btn.disabled = true; btn.textContent = 'Gerando PDF...'; }
+
+  var sc  = calcStrat();
+  var p   = getPMO();
+  var cls = classifyPMO(p.proj, p.sust, p.triggers, p.parciais, p.respondidas);
+  var stSt = stratStatus(sc.finalScore);
+  var mat  = (MATRIX[stSt.level]||{})[cls] || { text:'Indefinido', esc:false, acao:'' };
+  var pmoLabels  = { projeto:'PROJETO', sustentacao:'SUSTENTAÇÃO', melhoria:'MELHORIA CONTÍNUA', pmo:'AVALIAÇÃO PMO', vazio:'—' };
+  var stratLabels = { max:'Máxima (>=80)', high:'Alta (60-79)', mid:'Média (40-59)', low:'Baixa (<40)' };
+
+  var rLabel = function(v) { return v==='sim'?'Sim':v==='par'?'Parcial':v==='nao'?'Não':'—'; };
+  var rColor = function(v) { return v==='sim'?'#059669':v==='par'?'#d97706':v==='nao'?'#dc2626':'#888'; };
+  var rBg    = function(v) { return v==='sim'?'#ecfdf5':v==='par'?'#fffbeb':v==='nao'?'#fef2f2':'#f9fafb'; };
+
+  var pmoCol   = cls==='projeto'?'#84231a':cls==='sustentacao'?'#059669':cls==='melhoria'?'#d97706':'#84231a';
+  var stratCol = stSt.level==='max'?'#059669':stSt.level==='high'?'#d97706':stSt.level==='mid'?'#ea580c':'#dc2626';
+
+  // ── field box helper
+  var fbox = function(label, value) {
+    value = (value && value !== 'undefined') ? value : '—';
+    return '<div style="border:1px solid #e2e8f0;border-radius:6px;padding:10px 14px;background:#fff">'
+      + '<div style="font-size:8px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#6b7280;margin-bottom:4px">' + label + '</div>'
+      + '<div style="font-size:12px;color:#1a1d23">' + (value||'—') + '</div>'
+      + '</div>';
+  };
+
+  // ── table helpers
+  var tHead = '<tr style="background:#f0f4ff">'
+    + '<th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:8px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;text-align:center;width:24px;color:#4b5563">#</th>'
+    + '<th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:8px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;text-align:left;color:#4b5563">Pergunta</th>'
+    + '<th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:8px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;text-align:center;width:62px;color:#4b5563">Resposta</th>'
+    + '<th style="padding:6px 8px;border:1px solid #e2e8f0;font-size:8px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;text-align:left;color:#4b5563">Justificativa</th>'
+    + '</tr>';
+
+  var tRows = function(items, ansObj, justObj) {
+    var r = '';
+    items.forEach(function(q, idx) {
+      var a = ansObj[q.id] || '';
+      var j = esc(justObj[q.id]) || '—';
+      var rowBg = idx % 2 === 0 ? '#ffffff' : '#f8faff';
+      r += '<tr style="background:' + rowBg + '">'
+        + '<td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:8px;text-align:center;color:#9ca3af">' + (q.num||q.id) + '</td>'
+        + '<td style="padding:4px 8px;border:1px solid #e2e8f0;font-size:8px;color:#1a1d23;line-height:1.3">'
+          + (q.title ? '<strong style="color:#84231a">' + q.title + '</strong><br><span style="color:#6b7280;font-size:7px">' + q.text + '</span>' : '<span style="color:#374151">' + q.text + '</span>')
+        + '</td>'
+        + '<td style="padding:4px 6px;border:1px solid #e2e8f0;font-size:8px;text-align:center;background:' + rBg(a) + ';color:' + rColor(a) + ';font-weight:700;white-space:nowrap">' + rLabel(a) + '</td>'
+        + '<td style="padding:4px 8px;border:1px solid #e2e8f0;font-size:7px;color:#6b7280;line-height:1.3">' + j + '</td>'
+        + '</tr>';
+    });
+    return r;
+  };
+
+  var secTable = function(num, title, items, ansObj, justObj) {
+    return '<div class="sec-block" style="margin-bottom:18px;page-break-inside:avoid!important">'
+      + '<div style="background:#84231a;color:#fff;padding:8px 14px;border-radius:4px 4px 0 0;font-size:11px;font-weight:700;letter-spacing:.3px">' + num + '. ' + title + '</div>'
+      + '<table style="width:100%;border-collapse:collapse">' + tHead + tRows(items, ansObj, justObj) + '</table>'
+      + '</div>';
+  };
+
+  // ── score badge
+  var scoreBadge = function(label, value, color) {
+    return '<td style="text-align:center;padding:10px 6px;border:1px solid #e2e8f0;background:#f8faff">'
+      + '<div style="font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9ca3af;margin-bottom:3px">' + label + '</div>'
+      + '<div style="font-size:16px;font-weight:700;color:' + color + '">' + value + '</div>'
+      + '</td>';
+  };
+
+  var dataSolicitacao = document.getElementById('fi-data') ? document.getElementById('fi-data').value : new Date().toISOString().split('T')[0];
+
+  var doc = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    + '<style>'
+    + 'body{font-family:Poppins,Arial,sans-serif;color:#1a1d23;margin:0;padding:0;background:#f1f5f9;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    + '@media print{@page{size:A4;margin:10mm 12mm}body{background:#f1f5f9}.sec-block{page-break-inside:avoid!important}.sig-block{page-break-inside:avoid!important;page-break-before:auto}}'
+    + '</style></head><body>'
+    + '<div style="max-width:780px;margin:0 auto;padding:20px 0">'
+
+    // ── HEADER
+    + '<div style="background:linear-gradient(135deg,#84231a 0%,#84231a 100%);color:#fff;padding:18px 24px;border-radius:8px 8px 0 0;margin-bottom:2px">'
+    + '<div style="font-size:8px;letter-spacing:2.5px;text-transform:uppercase;opacity:.75;margin-bottom:6px">PMO · Relatório de Triagem Integrada</div>'
+    + '<div style="font-size:20px;font-weight:700;margin-bottom:2px">' + (esc(S.info.nome)||'Iniciativa sem nome') + '</div>'
+    + '<div style="font-size:10px;opacity:.8">Gerado em: ' + new Date().toLocaleString('pt-BR') + '</div>'
+    + '</div>'
+
+    // ── SEÇÃO 1 · IDENTIFICAÇÃO
+    + (function() {
+        var cell = function(label, val) {
+          return '<td style="width:50%;padding:0;border:1px solid #e2e8f0;background:#fff;vertical-align:top">'
+            + '<div style="padding:8px 12px">'
+            + '<div style="font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9ca3af;margin-bottom:3px">' + label + '</div>'
+            + '<div style="font-size:11px;color:#1a1d23">' + (esc(val)||'—') + '</div>'
+            + '</div></td>';
+        };
+        var fullCell = function(label, val) {
+          return '<tr><td colspan="2" style="padding:0;border:1px solid #e2e8f0;background:#fff;vertical-align:top">'
+            + '<div style="padding:8px 12px">'
+            + '<div style="font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9ca3af;margin-bottom:3px">' + label + '</div>'
+            + '<div style="font-size:11px;color:#1a1d23;line-height:1.5">' + (esc(val)||'—') + '</div>'
+            + '</div></td></tr>';
+        };
+        var rows = '';
+        rows += '<tr>' + cell('Nome da Iniciativa', S.info.nome) + cell('ID / Protocolo', S.info.id_protocolo) + '</tr>';
+        rows += '<tr>' + cell('Data de Solicitação', S.info.data) + cell('Área Demandante', S.info.area) + '</tr>';
+        rows += '<tr>' + cell('Categoria da Iniciativa', S.info.categoria) + cell('Patrocinador / Gestor', S.info.gestor) + '</tr>';
+        rows += '<tr>' + cell('Responsável pelo Preenchimento', S.info.resp) + cell('Classificação Validada Por', S.info.classificacao) + '</tr>';
+        var paybackStr = v(S.info.payback) ? S.info.payback + ' meses' : '—';
+        var beneficioLabel = S.info.tipoBeneficio === 'reducao' ? 'Redução Mensal Estimada' : S.info.tipoBeneficio === 'evitado' ? 'Custo Evitado Mensal' : S.info.tipoBeneficio === 'saving' ? 'Saving Mensal Estimado' : 'Receita Mensal Estimada';
+        var tipoBeneficioLabel = S.info.tipoBeneficio === 'receita' ? 'Aumento de Receita' : S.info.tipoBeneficio === 'reducao' ? 'Redução de Despesa' : S.info.tipoBeneficio === 'evitado' ? 'Custo Evitado' : S.info.tipoBeneficio === 'saving' ? 'Saving' : '—';
+        rows += '<tr>' + cell('Tipo de Benefício', tipoBeneficioLabel) + cell('Payback Estimado', S.info.temPayback === 'nao' ? 'Não aplicável' : paybackStr) + '</tr>';
+        rows += '<tr>' + (v(S.info.investimento) ? cell('Investimento Previsto', S.info.investimento) : cell('Investimento Previsto', '—')) + (v(S.info.receita) ? cell(beneficioLabel, S.info.receita) : cell(beneficioLabel, '—')) + '</tr>';
+        var duracaoStr = v(S.info.duracaoBeneficio) ? S.info.duracaoBeneficio + ' meses' : '—';
+        var totalStr = v(S.info.beneficioTotal) ? S.info.beneficioTotal : '—';
+        rows += '<tr>' + cell('Duração do Benefício', duracaoStr) + cell('Benefício Total Estimado', totalStr) + '</tr>';
+        if (v(S.info.desc)) rows += fullCell('Descrição Resumida', S.info.desc);
+        if (v(S.info.just_investimento)) rows += fullCell('Justificativa do Investimento / Benefício', S.info.just_investimento);
+        return '<div class="sec-block" style="margin-bottom:0">'
+          + '<div style="background:#84231a;color:#fff;padding:10px 18px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase">1. Identificação da Iniciativa</div>'
+          + '<table style="width:100%;border-collapse:collapse;margin-bottom:14px">' + rows + '</table>'
+          + '</div>';
+      })()
+
+    // ── SEÇÃO 2 · RESULTADO
+    + '<div style="background:#84231a;color:#fff;padding:10px 18px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px">2. Resultado Integrado</div>'
+    + '<div style="padding:0 16px 16px">'
+    + '<div style="background:#fff;border:1px solid #e2e8f0;border-left:5px solid ' + pmoCol + ';border-radius:4px;padding:14px 18px;margin-bottom:12px">'
+    + '<div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:#9ca3af;margin-bottom:6px">Enquadramento</div>'
+    + '<div style="font-size:20px;font-weight:700;color:' + pmoCol + ';margin-bottom:4px">' + mat.text + '</div>'
+    + '<div style="font-size:11px;color:#6b7280;margin-bottom:10px">' + mat.acao + '</div>'
+    + '<div style="display:flex;gap:20px;font-size:11px;flex-wrap:wrap">'
+    + '<span>Alinhamento: <strong style="color:' + stratCol + '">' + sc.finalScore + '/100 — ' + stratLabels[stSt.level] + '</strong></span>'
+    + '<span>PMO: <strong style="color:' + pmoCol + '">' + (pmoLabels[cls]||'—') + '</strong></span>'
+    + '<span>Escalonamento: <strong style="color:' + (mat.esc?'#dc2626':'#059669') + '">' + (mat.esc?'OBRIGATÓRIO':'Não necessário') + '</strong></span>'
+    + '</div>'
+    + '</div>'
+
+    + '</div>'
+
+    // ── SEÇÃO 2B · RECOMENDAÇÕES
+    + (function() {
+        var recs = [];
+        var alignStatus = '';
+        if (sc.finalScore >= 80) alignStatus = 'Alinhamento Máximo';
+        else if (sc.finalScore >= 60) alignStatus = 'Alinhamento Alto';
+        else if (sc.finalScore >= 40) alignStatus = 'Alinhamento Parcial: Este projeto possui bom potencial, mas há gaps de alinhamento que podem ser otimizados.';
+        else alignStatus = 'Baixo Alinhamento: Recomenda-se revisar os objetivos antes de prosseguir.';
+        
+        if (alignStatus.includes('Parcial') || alignStatus.includes('Baixo')) {
+          recs.push(alignStatus);
+        }
+        if (stSt.level==='max'||stSt.level==='high') { 
+          recs.push('Comunicar importância estratégica para toda organização.'); 
+          recs.push('Definir KPIs alinhados aos objetivos estratégicos.'); 
+        }
+        if (stSt.level==='mid') { 
+          recs.push('Revisar escopo para ampliar contribuição estratégica.'); 
+        }
+        if (cls==='projeto') { 
+          recs.push('Definir sponsor, cronograma e plano de comunicação.'); 
+        }
+        if (recs.length === 0) return '';
+        var html = '<div class="sec-block" style="page-break-inside:avoid;background:#fff;border:1px solid #e2e8f0;border-left:4px solid #84231a;border-radius:4px;padding:16px 18px;margin-bottom:14px">'
+          + '<div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#4b5563;margin-bottom:10px">Recomendações e Plano de Ação</div>';
+        recs.forEach(function(r) {
+          html += '<div style="font-size:11px;color:#1a1d23;line-height:1.7;margin-bottom:8px"><span style="color:#d97706;font-weight:600">→</span> ' + r + '</div>';
+        });
+        html += '</div>';
+        return html;
+      })()
+
+    // ── SEÇÃO 2C · MATRIZ DE POSICIONAMENTO
+    + (function() {
+        var stratLevels = ['max','high','mid','low'];
+        var stratLabels = { max:'Máxima (≥80)', high:'Alta (60–79)', mid:'Média (40–59)', low:'Baixa (<40)' };
+        var pmoClasses  = ['projeto','melhoria','sustentacao','pmo'];
+        var pmoHeaders  = { projeto:'PROJETO', melhoria:'MELHORIA', sustentacao:'SUSTENTAÇÃO', pmo:'AV. PMO' };
+        var clsColors   = { 'c-max':'#d1fae5;color:#065f46', 'c-high':'#dbeafe;color:#1e3a8a', 'c-mid':'#fef3c7;color:#92400e', 'c-low':'#fee2e2;color:#991b1b' };
+
+        var hdrCell = function(txt, w) {
+          return '<td style="padding:6px 8px;background:#f0f4ff;border:1px solid #e2e8f0;font-size:8px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;text-align:center;color:#4b5563' + (w?';width:'+w:'') + '">' + txt + '</td>';
+        };
+
+        var html = '<div class="sec-block" style="margin-bottom:18px;page-break-inside:avoid">'
+          + '<div style="background:#84231a;color:#fff;padding:8px 14px;border-radius:4px 4px 0 0;font-size:11px;font-weight:700;letter-spacing:.3px">Matriz de Posicionamento Estratégico</div>'
+          + '<div style="padding:10px 14px 6px;font-size:9px;color:#6b7280;background:#fff;border:1px solid #e2e8f0;border-top:none;border-bottom:none">A célula destacada (★) representa o posicionamento desta iniciativa.</div>'
+          + '<table style="width:100%;border-collapse:collapse">'
+          + '<tr>' + hdrCell('', '80px');
+        pmoClasses.forEach(function(pc) { html += hdrCell(pmoHeaders[pc]); });
+        html += '</tr>';
+
+        stratLevels.forEach(function(sl) {
+          html += '<tr>';
+          html += '<td style="padding:6px 8px;background:#f0f4ff;border:1px solid #e2e8f0;font-size:8px;font-weight:700;color:#4b5563;white-space:nowrap">' + stratLabels[sl] + '</td>';
+          pmoClasses.forEach(function(pc) {
+            var cell    = (MATRIX[sl]||{})[pc] || {};
+            var isActive = sl === stSt.level && pc === cls;
+            var bg = (clsColors[cell.cls]||'#f9fafb;color:#374151').split(';color:');
+            var bgColor = bg[0];
+            var txtColor = bg[1] || '#374151';
+            html += '<td style="padding:5px 7px;border:1px solid #e2e8f0;font-size:8px;text-align:center;background:' + bgColor + ';color:' + txtColor + ';font-weight:' + (isActive?'700':'400') + ';'
+              + (isActive?'outline:2px solid #84231a;outline-offset:-2px;':'') + '">'
+              + (isActive ? '★ ' : '') + (cell.text||'—') + '</td>';
+          });
+          html += '</tr>';
+        });
+
+        html += '</table></div>';
+        return html;
+      })()
+
+    // ── SEÇÃO 3 · RESPOSTAS
+    + '<div style="background:#84231a;color:#fff;padding:10px 18px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px">3. Respostas do Proponente</div>'
+    + '<div style="padding:0 16px 8px">'
+    + secTable(1, 'Objetivos Estratégicos', OBJECTIVES, S.strat, S.stratJust)
+    + secTable(2, 'Fatores Críticos de Sucesso', FCS_ITEMS, S.strat, S.stratJust)
+    + secTable(3, 'Avenidas de Crescimento', AVENUES, S.strat, S.stratJust)
+    + secTable(4, 'Dimensões de Projeto — Elegibilidade PMO', PMO_PROJ, S.pmo, S.pmoJust)
+    + secTable(5, 'Dimensões de Sustentação — Elegibilidade PMO', PMO_SUST, S.pmo, S.pmoJust)
+    + '</div>'
+
+    // ── SEÇÃO 4 · ASSINATURAS
+    + '<div class="sig-block" style="page-break-inside:avoid">'
+    + '<div style="background:#84231a;color:#fff;padding:10px 18px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px">4. Assinaturas</div>'
+    + '<div style="padding:0 16px 24px;display:flex;gap:20px">'
+
+    + '<div style="flex:1;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:20px 24px">'
+    + '<div style="height:48px"></div>'
+    + '<div style="border-top:1.5px solid #1a1d23;padding-top:8px">'
+    + '<div style="font-size:11px;font-weight:700;color:#1a1d23">Gestor Proponente</div>'
+    + '<div style="font-size:10px;color:#9ca3af;margin-top:3px">' + (esc(S.info.resp)||'______________________________') + '</div>'
+    + '</div></div>'
+
+    + '<div style="flex:1;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:20px 24px">'
+    + '<div style="height:48px"></div>'
+    + '<div style="border-top:1.5px solid #1a1d23;padding-top:8px">'
+    + '<div style="font-size:11px;font-weight:700;color:#1a1d23">Patrocinador</div>'
+    + '<div style="font-size:10px;color:#9ca3af;margin-top:3px">' + (esc(S.info.gestor)||'______________________________') + '</div>'
+    + '</div></div>'
+
+    + '</div>'
+    + '</div>'
+
+    // ── SEÇÃO 5 · ASSINATURA PMO CONCEPT
+    + '<div class="sig-block" style="page-break-inside:avoid">'
+    + '<div style="background:#84231a;color:#fff;padding:10px 18px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px">5. Validação PMO</div>'
+    + '<div style="padding:0 16px 24px">'
+    + '<div style="max-width:400px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:20px 24px;margin:0 auto">'
+    + '<div style="height:48px"></div>'
+    + '<div style="border-top:1.5px solid #1a1d23;padding-top:8px">'
+    + '<div style="font-size:11px;font-weight:700;color:#1a1d23">Responsável PMO Concept</div>'
+    + '<div style="font-size:10px;color:#9ca3af;margin-top:3px">______________________________</div>'
+    + '</div></div>'
+    + '</div>'
+    + '</div>'
+
+    // ── RODAPÉ
+    + '<div style="text-align:center;padding:10px 16px;font-size:9px;color:#9ca3af;border-top:1px solid #e2e8f0;margin:0 16px">'
+    + 'PMO · Análise Integrada de Iniciativas &nbsp;|&nbsp; ' + new Date().toLocaleString('pt-BR')
+    + '</div>'
+    + '</div></body></html>';
+
+  var win = window.open('', '_blank', 'width=900,height=700');
+  if (!win) {
+    alert('Permita pop-ups neste site para gerar o PDF.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Baixar Relatório PDF'; }
+    return;
+  }
+  win.document.open();
+  win.document.write(doc);
+  win.document.close();
+  win.focus();
+  setTimeout(function() {
+    win.print();
+    if (btn) { btn.disabled = false; btn.textContent = 'Baixar Relatório PDF'; }
+  }, 800);
+}
+
+
+// ═══════════════════════════════════════
+// TOOLTIP ENGINE
+// ═══════════════════════════════════════
+
+var _tipEl = null;
+function showTip(e, el) {
+  var tip = el.getAttribute('data-tip');
+  if (!tip) return;
+  if (!_tipEl) {
+    _tipEl = document.createElement('div');
+    _tipEl.className = 'tooltip-popup';
+    document.body.appendChild(_tipEl);
+  }
+  _tipEl.textContent = tip;
+  _tipEl.classList.remove('visible');
+
+  var rect = el.getBoundingClientRect();
+  var tw = 280;
+  var left = rect.left + rect.width / 2 - tw / 2;
+  var top  = rect.top - 8;
+
+  // Keep within viewport
+  if (left < 8) left = 8;
+  if (left + tw > window.innerWidth - 8) left = window.innerWidth - tw - 8;
+
+  _tipEl.style.left = left + 'px';
+  _tipEl.style.top  = top + 'px';
+  _tipEl.style.transform = 'translateY(-100%)';
+  _tipEl.style.width = tw + 'px';
+
+  requestAnimationFrame(function() { _tipEl.classList.add('visible'); });
+}
+function hideTip() {
+  if (_tipEl) _tipEl.classList.remove('visible');
+}
+
+
+// ═══════════════════════════════════════
+// GEMINI AI — PMO INSIGHTS
+// ═══════════════════════════════════════
+
+
+function buildGeminiPrompt() {
+  var sc   = calcStrat();
+  var p    = calcPMO();
+  var cls  = classifyPMO(p.proj, p.sust, p.triggers, p.parciais, p.respondidas);
+  var stSt = stratStatus(sc.finalScore);
+  var mat  = (MATRIX[stSt.level]||{})[cls] || { text:'Indefinido', esc:false, acao:'' };
+  var pmoLabels = { projeto:'PROJETO', sustentacao:'SUSTENTACAO', melhoria:'MELHORIA CONTINUA', pmo:'AVALIACAO PMO', vazio:'—' };
+  var nivLabels = { max:'Maxima (>=80)', high:'Alta (60-79)', mid:'Media (40-59)', low:'Baixa (<40)' };
+
+  var OBJS  = ['Expansao de Mercado','Receita e Rentabilidade','Excelencia Operacional','Reducao de Custos','Transformacao Digital','Experiencia do Cliente','Conformidade/ESG'];
+  var FCSS  = ['Capacidade Tecnologica','Gestao de Talentos','Parcerias','Conformidade Regulatoria','Dados e Inteligencia','Gestao da Mudanca'];
+  var AVES  = ['Novo Mercado/Cliente','Upsell/Cross-sell','Reducao de Custos','Ganho de Produtividade'];
+  var PROJS = ['Objetivo claro','Entrega unica','Multiplas areas','Impacto relevante','Cronograma formal','Orcamento/fornecedor','Testes/homologacao','Riscos estruturados','Sponsor/forum','Mudanca em processo','Dependencias externas','Esforco >160h'];
+  var SUSTS = ['Recorrencia/Corretiva','Cap. da area','Escopo localizado','Baixo impacto','Prazo ate 15 dias'];
+  var ids   = ['O1','O2','O3','O4','O5','O6','O7'];
+
+  var rL = function(v) { return v==='sim'?'Sim':v==='par'?'Parcial':v==='nao'?'Nao':'—'; };
+
+  var nl = '\n';
+
+  var objResp  = OBJS.map(function(n,i){ return '  - ' + n + ': ' + rL(S.strat[ids[i]]); }).join(nl);
+  var fcsIds   = ['F1','F2','F3','F4','F5','F6'];
+  var fcsResp  = FCSS.map(function(n,i){ return '  - ' + n + ': ' + rL(S.strat[fcsIds[i]]); }).join(nl);
+  var aveIds   = ['A1','A2','A3','A4'];
+  var aveResp  = AVES.map(function(n,i){ return '  - ' + n + ': ' + rL(S.strat[aveIds[i]]); }).join(nl);
+  var projIds  = ['P1','P2','P3','P4','P5','P6','P7','P8','P9','P10','P11','P12'];
+  var projResp = PROJS.map(function(n,i){ return '  - ' + n + ': ' + rL(S.pmo[projIds[i]]); }).join(nl);
+  var sustIds  = ['S1','S2','S3','S4','S5'];
+  var sustResp = SUSTS.map(function(n,i){ return '  - ' + n + ': ' + rL(S.pmo[sustIds[i]]); }).join(nl);
+
+  var systemPrompt = [
+    'Voce e Marcos Andrade, especialista senior em gerenciamento de projetos com 18 anos de experiencia',
+    'em grandes empresas de seguros e consorcios brasileiras como Porto Seguro, Bradesco Seguros, MAPFRE e Sul America.',
+    'Voce conhece profundamente o setor: ciclos regulatorios, SUSEP, transformacao digital, gestao de riscos e eficiencia operacional.',
+    'Sua comunicacao e direta, objetiva e estrategica.',
+    'Voce DEVE pesquisar na internet por iniciativas similares de concorrentes e tendencias do setor antes de responder.',
+    'Responda APENAS com JSON valido, sem markdown, sem texto fora do JSON.'
+  ].join(' ');
+
+  var lines = [
+    'Analise a seguinte iniciativa e forneca seu parecer especializado.',
+    '',
+    '## INICIATIVA',
+    'Nome: '         + (S.info.nome    || 'Nao informado'),
+    'Area: '         + (S.info.area    || 'Nao informada'),
+    'Gestor: '       + (S.info.gestor  || 'Nao informado'),
+    'Descricao: '    + (S.info.desc    || 'Nao informada'),
+    'Investimento: ' + (S.info.investimento || 'Nao informado'),
+    'Tipo de Benefício: ' + (S.info.tipoBeneficio === 'receita' ? 'Aumento de Receita' : S.info.tipoBeneficio === 'reducao' ? 'Reducao de Despesa' : S.info.tipoBeneficio === 'evitado' ? 'Custo Evitado' : S.info.tipoBeneficio === 'saving' ? 'Saving' : 'Nao informado'),
+    'Beneficio Mensal Estimado: ' + (S.info.receita || 'Nao informado'),
+    'Duracao do Beneficio: ' + (S.info.duracaoBeneficio ? S.info.duracaoBeneficio + ' meses' : 'Nao informado'),
+    'Beneficio Total Estimado: ' + (S.info.beneficioTotal || 'Nao informado'),
+    'Tem Payback: ' + (S.info.temPayback === 'nao' ? 'Nao aplicavel' : 'Sim'),
+    '',
+    '## RESULTADO DA TRIAGEM PMO',
+    'Enquadramento: '   + (pmoLabels[cls]||cls),
+    'Resultado: '       + mat.text,
+    'Score Estrategico: ' + sc.finalScore + '/100 — Nivel: ' + (nivLabels[stSt.level]||stSt.level),
+    'Score Objetivos: ' + sc.objScore + '% | FCS: ' + sc.fcsScore + '% | Avenidas: ' + sc.aveScore + '%',
+    'Score Projeto PMO: ' + p.proj.toFixed(1) + '/76 | Sustentacao: ' + p.sust.toFixed(1) + '/40',
+    'Triggers: ' + p.triggers + '/5 | Escalonamento: ' + (mat.esc?'OBRIGATORIO':'Nao necessario'),
+    '',
+    '## RESPOSTAS',
+    '### Objetivos Estrategicos', objResp,
+    '### Fatores Criticos de Sucesso', fcsResp,
+    '### Avenidas de Crescimento', aveResp,
+    '### Dimensoes de Projeto', projResp,
+    '### Dimensoes de Sustentacao', sustResp,
+    '',
+    '## FORMATO DE RESPOSTA',
+    'Responda SOMENTE com este JSON (sem markdown, sem backticks):',
+    '{"avaliacao_geral":"...","aderencia_setor":"...","benchmarking":"...","riscos":"...","recomendacao":"AVANCAR ou REVISAR ou REPENSAR","recomendacao_justificativa":"...","fontes":["url1"]}'
+  ];
+
+  return { systemPrompt: systemPrompt, userPrompt: lines.join(nl) };
+}
+
+
+function callGeminiInsights() {
+  var el = document.getElementById('ai-insights-body');
+  if (!el) return;
+
+  // Build payload
+  var sc   = calcStrat();
+  var p    = calcPMO();
+  var cls  = classifyPMO(p.proj, p.sust, p.triggers, p.parciais, p.respondidas);
+  var stSt = stratStatus(sc.finalScore);
+  var mat  = (MATRIX[stSt.level]||{})[cls] || { text:'Indefinido', esc:false, acao:'' };
+  var pmoLabels = { projeto:'PROJETO', sustentacao:'SUSTENTAÇÃO', melhoria:'MELHORIA CONTÍNUA', pmo:'AVALIAÇÃO PMO', vazio:'—' };
+  var nivLabels = { max:'Máxima (>=80)', high:'Alta (60-79)', mid:'Média (40-59)', low:'Baixa (<40)' };
+
+  // Build respostas object
+  var respostas = {};
+  var allIds = ['O1','O2','O3','O4','O5','O6','O7','F1','F2','F3','F4','F5','F6','A1','A2','A3','A4','P1','P2','P3','P4','P5','P6','P7','P8','P9','P10','P11','P12','S1','S2','S3','S4','S5'];
+  allIds.forEach(function(id) {
+    var isStrat = id.charAt(0) === 'O' || id.charAt(0) === 'F' || id.charAt(0) === 'A';
+    respostas[id] = {
+      resp: isStrat ? (S.strat[id]||'') : (S.pmo[id]||''),
+      just: isStrat ? (S.stratJust[id]||'') : (S.pmoJust[id]||'')
+    };
+  });
+
+  var data = {
+    info:      S.info,
+    scores:    { finalScore: sc.finalScore, objScore: sc.objScore, fcsScore: sc.fcsScore, aveScore: sc.aveScore, stratLevel: nivLabels[stSt.level]||stSt.level },
+    pmo:       { enquadramento: pmoLabels[cls]||cls, scoreProj: p.proj.toFixed(1), scoreSust: p.sust.toFixed(1), triggers: p.triggers },
+    result:    { texto: mat.text, acao: mat.acao, escalonamento: mat.esc },
+    respostas: respostas
+  };
+
+  // Timeout
+  var timeout = setTimeout(function() {
+    el.innerHTML = '<div class="ai-error">Tempo esgotado. <button class="btn btn-secondary" onclick="callGeminiInsights()" style="font-size:12px;padding:6px 14px;margin-top:8px">Tentar novamente</button></div>';
+  }, 30000);
+
+  // Chamada via POST (evita o limite de tamanho de URL do JSONP/GET)
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'geminiInsights', data: data })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(response) {
+    clearTimeout(timeout);
+    if (response && response.status === 'ok' && response.parecer) {
+      renderInsights(el, response.parecer);
+    } else {
+      el.innerHTML = '<div class="ai-error">Erro ao obter análise da IA: ' + (response.message||'Resposta inválida') + '<br><button class="btn btn-secondary" onclick="callGeminiInsights()" style="font-size:12px;padding:6px 14px;margin-top:8px">Tentar novamente</button></div>';
+    }
+  })
+  .catch(function() {
+    clearTimeout(timeout);
+    el.innerHTML = '<div class="ai-error">Erro de conexão com o Apps Script.<br><button class="btn btn-secondary" onclick="callGeminiInsights()" style="font-size:12px;padding:6px 14px;margin-top:8px">Tentar novamente</button></div>';
+  });
+}
+
+function renderInsights(el, parecer) {
+  var recClass = parecer.recomendacao === 'AVANCAR' ? 'ai-rec-avancar' : parecer.recomendacao === 'REVISAR' ? 'ai-rec-revisar' : 'ai-rec-repensar';
+  var recLabel = parecer.recomendacao === 'AVANCAR' ? 'AVANÇAR' : parecer.recomendacao === 'REVISAR' ? 'REVISAR' : 'REPENSAR';
+  var recIcon  = parecer.recomendacao === 'AVANCAR' ? '✓' : parecer.recomendacao === 'REVISAR' ? '⚠' : '✕';
+
+  var html = '<div class="ai-recommendation ' + recClass + '">' + recIcon + ' ' + recLabel + '</div>';
+  html += '<div style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:20px">' + (parecer.recomendacao_justificativa||'') + '</div>';
+
+  var sections = [
+    { icon: '🔍', title: 'Avaliação Geral', key: 'avaliacao_geral' },
+    { icon: '🏢', title: 'Aderência ao Setor de Seguros e Consórcios', key: 'aderencia_setor' },
+    { icon: '🌐', title: 'Benchmarking — Mercado e Concorrentes', key: 'benchmarking' },
+    { icon: '⚠️', title: 'Riscos e Pontos de Atenção', key: 'riscos' },
+  ];
+
+  sections.forEach(function(s) {
+    if (parecer[s.key]) {
+      html += '<div class="ai-section">';
+      html += '<div class="ai-section-title"><span class="ai-section-icon">' + s.icon + '</span>' + s.title + '</div>';
+      html += '<div class="ai-content">' + parecer[s.key] + '</div>';
+      html += '</div>';
+    }
+  });
+
+  html += '<div class="ai-timestamp">Análise gerada em ' + new Date().toLocaleString('pt-BR') + ' · Gemini 1.5 Flash via PMO Apps Script</div>';
+  el.innerHTML = html;
+}
+
+
+try {
+  if (loadDraft()) {
+    var __resumeEl = document.getElementById('app-content');
+    if (__resumeEl) {
+      // Mostra aviso de rascunho restaurado antes da renderização normal
+      setTimeout(function() {
+        var banner = document.createElement('div');
+        banner.className = 'alert info';
+        banner.style.marginBottom = '16px';
+        banner.innerHTML = '📋 Rascunho anterior restaurado automaticamente. <button class="btn btn-secondary" style="margin-left:8px;font-size:11px;padding:4px 10px" onclick="clearDraft();resetAll()">Descartar e começar do zero</button>';
+        __resumeEl.parentNode.insertBefore(banner, __resumeEl);
+      }, 0);
+    }
+  }
+  render();
+} catch(err) {
+  console.error('PMO RENDER ERROR:', err);
+  document.getElementById('app-content').innerHTML =
+    '<div style="padding:40px;color:red;font-family:monospace;font-size:12px">' +
+    '<strong>Erro de inicialização:</strong><br>' + err.message +
+    '<br><br>' + err.stack + '</div>';
+}
+</script>
+</body>
+</html>
